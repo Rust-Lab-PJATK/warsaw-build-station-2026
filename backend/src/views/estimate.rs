@@ -23,9 +23,20 @@ impl EstimateRequest {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(clippy::module_name_repetitions)]
-pub struct EstimateResponse {
+pub struct EstimateTaskResponse {
+    pub title: String,
+    pub description: String,
     pub price_sol: f64,
     pub complexity: u8,
+    pub rationale: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[allow(clippy::module_name_repetitions)]
+pub struct EstimateResponse {
+    pub tasks: Vec<EstimateTaskResponse>,
+    pub total_price_sol: f64,
+    pub overall_complexity: u8,
     pub rationale: String,
 }
 
@@ -122,8 +133,19 @@ impl EstimateServiceErrorResponse {
 impl From<crate::services::estimate_output::ValidatedEstimate> for EstimateResponse {
     fn from(value: crate::services::estimate_output::ValidatedEstimate) -> Self {
         Self {
-            price_sol: value.price_sol,
-            complexity: value.complexity,
+            tasks: value
+                .tasks
+                .into_iter()
+                .map(|task| EstimateTaskResponse {
+                    title: task.title,
+                    description: task.description,
+                    price_sol: task.price_sol,
+                    complexity: task.complexity,
+                    rationale: task.rationale,
+                })
+                .collect(),
+            total_price_sol: value.total_price_sol,
+            overall_complexity: value.overall_complexity,
             rationale: value.rationale,
         }
     }

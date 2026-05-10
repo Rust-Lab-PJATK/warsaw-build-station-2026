@@ -78,7 +78,18 @@ fn install_stub_service_request_failure() -> EstimateServiceFactoryGuard {
 #[serial]
 async fn post_estimate_returns_success_payload_shape() {
     let _guard = install_stub_service(
-        r#"{"price_sol": 380, "complexity": 3, "rationale": "Zakres średni."}"#,
+        r#"{
+          "tasks":[
+            {
+              "title":"Backend",
+              "description":"Implementacja endpointów",
+              "price_sol": 380,
+              "complexity": 3,
+              "rationale":"Zakres średni."
+            }
+          ],
+          "rationale":"Projekt podzielony na 1 task."
+        }"#,
     );
 
     request::<App, _, _>(|request, _ctx| async move {
@@ -89,9 +100,18 @@ async fn post_estimate_returns_success_payload_shape() {
 
         assert_eq!(res.status_code(), 200);
         res.assert_json(&serde_json::json!({
-            "price_sol": 380.0,
-            "complexity": 3,
-            "rationale": "Zakres średni."
+            "tasks": [
+                {
+                    "title": "Backend",
+                    "description": "Implementacja endpointów",
+                    "price_sol": 380.0,
+                    "complexity": 3,
+                    "rationale": "Zakres średni."
+                }
+            ],
+            "total_price_sol": 380.0,
+            "overall_complexity": 3,
+            "rationale": "Projekt podzielony na 1 task."
         }));
     })
     .await;
@@ -113,8 +133,9 @@ async fn post_estimate_uses_deterministic_fallback_when_model_output_is_malforme
 
         assert_eq!(res.status_code(), 200);
         res.assert_json(&serde_json::json!({
-            "price_sol": expected_fallback.estimate.price_sol,
-            "complexity": expected_fallback.estimate.complexity,
+            "tasks": expected_fallback.estimate.tasks,
+            "total_price_sol": expected_fallback.estimate.total_price_sol,
+            "overall_complexity": expected_fallback.estimate.overall_complexity,
             "rationale": expected_fallback.estimate.rationale
         }));
     })

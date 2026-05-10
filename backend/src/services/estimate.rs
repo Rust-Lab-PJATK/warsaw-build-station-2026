@@ -830,7 +830,7 @@ mod tests {
                     ElevenLabsConversationTurnOutput {
                         role: "agent".to_string(),
                         message: Some(
-                            "{\"price_sol\":380,\"complexity\":3,\"rationale\":\"ok\"}".to_string(),
+                            "{\"tasks\":[{\"title\":\"Backend\",\"description\":\"Implementacja\",\"price_sol\":380,\"complexity\":3,\"rationale\":\"ok\"}],\"rationale\":\"ok\"}".to_string(),
                         ),
                     },
                 ],
@@ -846,7 +846,7 @@ mod tests {
 
         assert_eq!(
             output,
-            "{\"price_sol\":380,\"complexity\":3,\"rationale\":\"ok\"}"
+            "{\"tasks\":[{\"title\":\"Backend\",\"description\":\"Implementacja\",\"price_sol\":380,\"complexity\":3,\"rationale\":\"ok\"}],\"rationale\":\"ok\"}"
         );
         assert_eq!(client.captured_turn_limit(), Some(7));
         assert!(

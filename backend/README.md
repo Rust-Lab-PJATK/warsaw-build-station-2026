@@ -37,16 +37,31 @@ Invalid JSON/non-object body also returns **400** with `code: "validation_error"
 
 ```json
 {
-  "price_sol": 380.0,
-  "complexity": 3,
-  "rationale": "Zakres średni."
+  "tasks": [
+    {
+      "title": "Backend",
+      "description": "Implementacja endpointów",
+      "price_sol": 380.0,
+      "complexity": 3,
+      "rationale": "Zakres średni."
+    }
+  ],
+  "total_price_sol": 380.0,
+  "overall_complexity": 3,
+  "rationale": "Projekt podzielony na 1 task."
 }
 ```
 
 Response fields are always:
-- `price_sol` (number, normalized to 2 decimals),
-- `complexity` (1..=5),
-- `rationale` (non-empty string).
+- `tasks` (non-empty array),
+- `tasks[].title` (non-empty string),
+- `tasks[].description` (non-empty string),
+- `tasks[].price_sol` (number, normalized to 2 decimals),
+- `tasks[].complexity` (1..=5),
+- `tasks[].rationale` (non-empty string),
+- `total_price_sol` (sum of all `tasks[].price_sol`),
+- `overall_complexity` (max z `tasks[].complexity`),
+- `rationale` (project-level non-empty string).
 
 ### Service errors (provider-neutral)
 
@@ -69,7 +84,6 @@ Response fields are always:
 
 ### Fallback behavior for invalid model output
 
-If upstream provider responds but output cannot be parsed/validated as required JSON (`price_sol`,
-`complexity`, `rationale`), the endpoint still returns **200** with a deterministic fallback
-estimate derived from `task_description` length. In that case, `rationale` explains fallback use
-and includes parser failure reason.
+If upstream provider responds but output cannot be parsed/validated as required JSON (`tasks[]` and
+task fields), the endpoint still returns **200** with a deterministic fallback estimate in the same
+project-task shape. In that case, `rationale` explains fallback use and includes parser failure reason.

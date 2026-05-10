@@ -70,16 +70,28 @@ mod tests {
     #[tokio::test]
     async fn estimate_task_returns_validated_estimate_when_model_output_is_valid() {
         let text_service = StubEstimateTextService {
-            response_text: r#"{"price_sol": 380, "complexity": 3, "rationale": "Zakres średni."}"#
-                .to_string(),
+            response_text: r#"{
+                "tasks":[
+                    {
+                        "title":"Backend",
+                        "description":"Implementacja endpointów",
+                        "price_sol": 380,
+                        "complexity": 3,
+                        "rationale":"Zakres średni."
+                    }
+                ],
+                "rationale":"Projekt podzielony na 1 task."
+            }"#
+            .to_string(),
         };
 
         let result = estimate_task("Dodaj API endpoint", &text_service).await;
         assert!(result.is_ok());
         if let Ok(estimate) = result {
-            assert_eq!(estimate.price_sol, 380.0);
-            assert_eq!(estimate.complexity, 3);
-            assert_eq!(estimate.rationale, "Zakres średni.");
+            assert_eq!(estimate.tasks.len(), 1);
+            assert_eq!(estimate.tasks[0].price_sol, 380.0);
+            assert_eq!(estimate.tasks[0].complexity, 3);
+            assert_eq!(estimate.total_price_sol, 380.0);
         }
     }
 
@@ -92,8 +104,9 @@ mod tests {
         let result = estimate_task("Dodaj API endpoint", &text_service).await;
         assert!(result.is_ok());
         if let Ok(estimate) = result {
-            assert!((1.0..=100_000.0).contains(&estimate.price_sol));
-            assert!((1..=5).contains(&i32::from(estimate.complexity)));
+            assert!((1.0..=100_000.0).contains(&estimate.total_price_sol));
+            assert!((1..=5).contains(&i32::from(estimate.overall_complexity)));
+            assert_eq!(estimate.tasks.len(), 3);
             assert!(estimate.rationale.contains("Użyto fallbacku estymacji"));
         }
     }
