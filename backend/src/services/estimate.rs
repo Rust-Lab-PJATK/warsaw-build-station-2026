@@ -122,7 +122,6 @@ impl ElevenLabsEstimateService {
     /// - `ELEVENLABS_SIMULATION_TURNS_LIMIT` (defaults to `8`)
     pub fn from_env() -> Result<Self, EstimateServiceError> {
         let config = ElevenLabsAgentsConfig::from_env()?;
-        println!("{:?}", config);
         let http_client = Client::builder()
             .build()
             .map_err(EstimateServiceError::ElevenLabsClientInitialization)?;
