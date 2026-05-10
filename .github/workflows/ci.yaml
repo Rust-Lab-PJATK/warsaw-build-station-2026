@@ -17,6 +17,9 @@ jobs:
 
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout the code
@@ -26,10 +29,7 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Run Clippy
@@ -37,6 +37,9 @@ jobs:
 
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout the code
@@ -46,11 +49,10 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
-      - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
         with:
-          command: clippy
-          args: --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery -W rust-2018-idioms
+          workspaces: backend
+      - name: Run cargo clippy
+        run: cargo clippy --all-features -- -D warnings -W clippy::pedantic -W clippy::nursery -W rust-2018-idioms
 
   test:
     name: Run Tests
@@ -58,7 +60,10 @@ jobs:
 
     permissions:
       contents: read
-    
+    defaults:
+      run:
+        working-directory: backend
+
     services:
       redis:
         image: redis
@@ -69,16 +74,16 @@ jobs:
           --health-retries 5
         ports:
           - "6379:6379"
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_DB: postgres_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+      mongodb:
+        image: mongo:latest
         ports:
-          - "5432:5432"
-        # Set health checks to wait until postgres has started
-        options: --health-cmd pg_isready
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: loco
+          MONGO_INITDB_ROOT_PASSWORD: loco
+          MONGO_INITDB_DATABASE: loco_dev
+        options: >-
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -92,11 +97,7 @@ jobs:
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --all
+        run: cargo test --all-features --all
         env:
           REDIS_URL: redis://localhost:${{job.services.redis.ports[6379]}}
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres_test
-          
