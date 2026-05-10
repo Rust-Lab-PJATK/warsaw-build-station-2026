@@ -52,7 +52,7 @@ jobs:
         with:
           workspaces: backend
       - name: Run cargo clippy
-        run: cargo clippy --all-features -D warnings clippy::pedantic -W clippy::nursery -W rust-2018-idioms
+        run: cargo clippy --all-features -- -D warnings clippy::pedantic -W clippy::nursery -W rust-2018-idioms
 
   test:
     name: Run Tests
