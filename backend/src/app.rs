@@ -1,17 +1,19 @@
 use async_trait::async_trait;
 use loco_rs::{
+    Result,
     app::{AppContext, Hooks, Initializer},
     bgworker::{BackgroundWorker, Queue},
-    boot::{create_app, BootResult, StartMode},
+    boot::{BootResult, StartMode, create_app},
     config::Config,
     controller::AppRoutes,
     environment::Environment,
     task::Tasks,
-    Result,
 };
 
 #[allow(unused_imports)]
-use crate::{controllers, tasks, workers::downloader::DownloadWorker};
+use crate::{
+    controllers, initializers::MongoDbInitializer, tasks, workers::downloader::DownloadWorker,
+};
 
 pub struct App;
 #[async_trait]
@@ -39,7 +41,7 @@ impl Hooks for App {
     }
 
     async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
-        Ok(vec![])
+        Ok(vec![Box::new(MongoDbInitializer)])
     }
 
     fn routes(_ctx: &AppContext) -> AppRoutes {
