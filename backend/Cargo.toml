@@ -25,6 +25,9 @@ tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 regex = { version = "1.11" }
 mongodb = "3.6.0"
+rig-core = "0.36.0"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+dotenvy = "0.15.7"
 
 [[bin]]
 name = "backend-cli"
