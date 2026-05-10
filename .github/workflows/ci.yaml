@@ -74,16 +74,16 @@ jobs:
           --health-retries 5
         ports:
           - "6379:6379"
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_DB: postgres_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+      mongodb:
+        image: mongo:latest
         ports:
-          - "5432:5432"
-        # Set health checks to wait until postgres has started
-        options: --health-cmd pg_isready
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: loco
+          MONGO_INITDB_ROOT_PASSWORD: loco
+          MONGO_INITDB_DATABASE: loco_dev
+        options: >-
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
