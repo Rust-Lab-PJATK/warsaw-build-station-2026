@@ -12,7 +12,10 @@ use serde_json::Value;
 
 use crate::{
     services::{
-        estimate::{EstimateServiceError, EstimateTextService, RigOpenAiEstimateService},
+        estimate::{
+            EstimateServiceError, EstimateTextService, EstimateTextServiceFactory,
+            build_estimate_text_service_from_env,
+        },
         estimate_flow::{EstimateFlowError, estimate_task},
     },
     views::estimate::{
@@ -21,13 +24,16 @@ use crate::{
     },
 };
 
-type EstimateServiceFactory =
-    dyn Fn() -> std::result::Result<Box<dyn EstimateTextService>, EstimateServiceError>
-        + Send
-        + Sync;
+const ESTIMATE_PROVIDER_CONFIGURATION_ERROR_CODE: &str = "estimate_provider_configuration_error";
+const ESTIMATE_PROVIDER_CONFIGURATION_ERROR_MESSAGE: &str =
+    "estimate provider configuration is missing or invalid";
+const ESTIMATE_PROVIDER_REQUEST_FAILED_CODE: &str = "estimate_provider_request_failed";
+const ESTIMATE_PROVIDER_REQUEST_FAILED_MESSAGE: &str =
+    "failed to get estimate from upstream provider";
 
-static ESTIMATE_SERVICE_FACTORY_OVERRIDE: OnceLock<RwLock<Option<Arc<EstimateServiceFactory>>>> =
-    OnceLock::new();
+static ESTIMATE_SERVICE_FACTORY_OVERRIDE: OnceLock<
+    RwLock<Option<Arc<EstimateTextServiceFactory>>>,
+> = OnceLock::new();
 
 #[debug_handler]
 async fn estimate(body: Bytes) -> Result<Response> {
@@ -79,14 +85,12 @@ fn parse_request(body: &[u8]) -> Result<EstimateRequest, EstimateValidationError
     })
 }
 
-fn estimate_service_factory_override() -> &'static RwLock<Option<Arc<EstimateServiceFactory>>> {
+fn estimate_service_factory_override() -> &'static RwLock<Option<Arc<EstimateTextServiceFactory>>> {
     ESTIMATE_SERVICE_FACTORY_OVERRIDE.get_or_init(|| RwLock::new(None))
 }
 
-fn build_estimate_text_service() -> std::result::Result<
-    Box<dyn EstimateTextService>,
-    EstimateServiceError,
-> {
+fn build_estimate_text_service()
+-> std::result::Result<Box<dyn EstimateTextService>, EstimateServiceError> {
     let override_factory = {
         let lock = estimate_service_factory_override();
         let guard = match lock.read() {
@@ -100,8 +104,7 @@ fn build_estimate_text_service() -> std::result::Result<
         return factory();
     }
 
-    RigOpenAiEstimateService::from_env()
-        .map(|service| Box::new(service) as Box<dyn EstimateTextService>)
+    build_estimate_text_service_from_env()
 }
 
 #[doc(hidden)]
@@ -143,15 +146,33 @@ fn map_service_error(error: EstimateServiceError) -> Response {
         EstimateServiceError::ClientInitialization(_) => json_response(
             StatusCode::SERVICE_UNAVAILABLE,
             EstimateServiceErrorResponse::new(
-                "openai_configuration_error",
-                "OpenAI configuration is missing or invalid",
+                ESTIMATE_PROVIDER_CONFIGURATION_ERROR_CODE,
+                ESTIMATE_PROVIDER_CONFIGURATION_ERROR_MESSAGE,
             ),
         ),
         EstimateServiceError::LlmRequest(_) => json_response(
             StatusCode::BAD_GATEWAY,
             EstimateServiceErrorResponse::new(
-                "openai_request_failed",
-                "failed to get estimate from OpenAI model",
+                ESTIMATE_PROVIDER_REQUEST_FAILED_CODE,
+                ESTIMATE_PROVIDER_REQUEST_FAILED_MESSAGE,
+            ),
+        ),
+        EstimateServiceError::MissingConfiguration { .. }
+        | EstimateServiceError::InvalidConfiguration { .. }
+        | EstimateServiceError::ElevenLabsClientInitialization(_) => json_response(
+            StatusCode::SERVICE_UNAVAILABLE,
+            EstimateServiceErrorResponse::new(
+                ESTIMATE_PROVIDER_CONFIGURATION_ERROR_CODE,
+                ESTIMATE_PROVIDER_CONFIGURATION_ERROR_MESSAGE,
+            ),
+        ),
+        EstimateServiceError::ElevenLabsRequestFailed(_)
+        | EstimateServiceError::ElevenLabsRequestUnsuccessful { .. }
+        | EstimateServiceError::ElevenLabsEmptyResponse => json_response(
+            StatusCode::BAD_GATEWAY,
+            EstimateServiceErrorResponse::new(
+                ESTIMATE_PROVIDER_REQUEST_FAILED_CODE,
+                ESTIMATE_PROVIDER_REQUEST_FAILED_MESSAGE,
             ),
         ),
     }
@@ -175,8 +196,34 @@ pub fn routes() -> Routes {
 
 #[cfg(test)]
 mod tests {
+    use axum::{body::to_bytes, http::StatusCode};
+    use rig::{client::ProviderClientError, completion::CompletionError};
+
+    use super::map_service_error;
     use super::parse_request;
-    use crate::views::estimate::EstimateValidationErrorResponse;
+    use crate::{
+        services::estimate::EstimateServiceError,
+        views::estimate::{EstimateServiceErrorResponse, EstimateValidationErrorResponse},
+    };
+
+    async fn assert_service_error_mapping(
+        error: EstimateServiceError,
+        expected_status: StatusCode,
+        expected_code: &str,
+        expected_message: &str,
+    ) {
+        let response = map_service_error(error);
+        assert_eq!(response.status(), expected_status);
+        let body = to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("response body should be readable");
+        let payload = serde_json::from_slice::<EstimateServiceErrorResponse>(&body)
+            .expect("body should be valid EstimateServiceErrorResponse JSON");
+        assert_eq!(
+            payload,
+            EstimateServiceErrorResponse::new(expected_code, expected_message)
+        );
+    }
 
     #[test]
     fn parse_request_rejects_invalid_json() {
@@ -218,5 +265,58 @@ mod tests {
     fn parse_request_accepts_valid_json() {
         let result = parse_request(br#"{"task_description":"abc"}"#);
         assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn map_service_error_openai_configuration_is_provider_neutral() {
+        assert_service_error_mapping(
+            EstimateServiceError::ClientInitialization(ProviderClientError::InvalidConfiguration(
+                "invalid OPENAI_API_KEY",
+            )),
+            StatusCode::SERVICE_UNAVAILABLE,
+            "estimate_provider_configuration_error",
+            "estimate provider configuration is missing or invalid",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn map_service_error_openai_request_failure_is_provider_neutral() {
+        assert_service_error_mapping(
+            EstimateServiceError::LlmRequest(
+                CompletionError::ProviderError("upstream failed".to_string()).into(),
+            ),
+            StatusCode::BAD_GATEWAY,
+            "estimate_provider_request_failed",
+            "failed to get estimate from upstream provider",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn map_service_error_elevenlabs_configuration_is_provider_neutral() {
+        assert_service_error_mapping(
+            EstimateServiceError::MissingConfiguration {
+                key: "ELEVENLABS_API_KEY",
+            },
+            StatusCode::SERVICE_UNAVAILABLE,
+            "estimate_provider_configuration_error",
+            "estimate provider configuration is missing or invalid",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn map_service_error_elevenlabs_request_failure_is_provider_neutral() {
+        assert_service_error_mapping(
+            EstimateServiceError::ElevenLabsRequestUnsuccessful {
+                status_code: 500,
+                body: "upstream failed".to_string(),
+            },
+            StatusCode::BAD_GATEWAY,
+            "estimate_provider_request_failed",
+            "failed to get estimate from upstream provider",
+        )
+        .await;
     }
 }

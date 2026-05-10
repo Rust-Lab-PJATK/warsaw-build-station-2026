@@ -17,6 +17,8 @@ struct StubEstimateTextService {
     output: String,
 }
 
+struct StubFailingEstimateTextService;
+
 #[async_trait]
 impl EstimateTextService for StubEstimateTextService {
     async fn generate_estimate_text(
@@ -24,6 +26,19 @@ impl EstimateTextService for StubEstimateTextService {
         _task_description: &str,
     ) -> std::result::Result<String, EstimateServiceError> {
         Ok(self.output.clone())
+    }
+}
+
+#[async_trait]
+impl EstimateTextService for StubFailingEstimateTextService {
+    async fn generate_estimate_text(
+        &self,
+        _task_description: &str,
+    ) -> std::result::Result<String, EstimateServiceError> {
+        Err(EstimateServiceError::ElevenLabsRequestUnsuccessful {
+            status_code: 502,
+            body: "upstream failed".to_string(),
+        })
     }
 }
 
@@ -45,11 +60,25 @@ fn install_stub_service(raw_output: &str) -> EstimateServiceFactoryGuard {
     EstimateServiceFactoryGuard
 }
 
+fn install_stub_service_init_failure() -> EstimateServiceFactoryGuard {
+    set_estimate_service_factory_for_tests(|| {
+        Err(EstimateServiceError::MissingConfiguration {
+            key: "ELEVENLABS_API_KEY",
+        })
+    });
+    EstimateServiceFactoryGuard
+}
+
+fn install_stub_service_request_failure() -> EstimateServiceFactoryGuard {
+    set_estimate_service_factory_for_tests(|| Ok(Box::new(StubFailingEstimateTextService)));
+    EstimateServiceFactoryGuard
+}
+
 #[tokio::test]
 #[serial]
 async fn post_estimate_returns_success_payload_shape() {
     let _guard = install_stub_service(
-        r#"{"price_usdc": 380, "complexity": 3, "rationale": "Zakres średni."}"#,
+        r#"{"price_sol": 380, "complexity": 3, "rationale": "Zakres średni."}"#,
     );
 
     request::<App, _, _>(|request, _ctx| async move {
@@ -60,7 +89,7 @@ async fn post_estimate_returns_success_payload_shape() {
 
         assert_eq!(res.status_code(), 200);
         res.assert_json(&serde_json::json!({
-            "price_usdc": 380.0,
+            "price_sol": 380.0,
             "complexity": 3,
             "rationale": "Zakres średni."
         }));
@@ -74,8 +103,7 @@ async fn post_estimate_uses_deterministic_fallback_when_model_output_is_malforme
     let malformed_output = "to nie jest json";
     let _guard = install_stub_service(malformed_output);
     let task_description = "Dodaj endpoint API";
-    let expected_fallback =
-        parse_and_validate_estimate_output(task_description, malformed_output);
+    let expected_fallback = parse_and_validate_estimate_output(task_description, malformed_output);
 
     request::<App, _, _>(|request, _ctx| async move {
         let res = request
@@ -85,7 +113,7 @@ async fn post_estimate_uses_deterministic_fallback_when_model_output_is_malforme
 
         assert_eq!(res.status_code(), 200);
         res.assert_json(&serde_json::json!({
-            "price_usdc": expected_fallback.estimate.price_usdc,
+            "price_sol": expected_fallback.estimate.price_sol,
             "complexity": expected_fallback.estimate.complexity,
             "rationale": expected_fallback.estimate.rationale
         }));
@@ -123,6 +151,46 @@ async fn post_estimate_rejects_blank_task_description() {
         res.assert_json(&serde_json::json!(
             EstimateValidationErrorResponse::for_blank_task_description()
         ));
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn post_estimate_maps_provider_configuration_errors_to_provider_neutral_payload() {
+    let _guard = install_stub_service_init_failure();
+
+    request::<App, _, _>(|request, _ctx| async move {
+        let res = request
+            .post("/api/estimate")
+            .json(&serde_json::json!({"task_description":"Dodaj endpoint API"}))
+            .await;
+
+        assert_eq!(res.status_code(), 503);
+        res.assert_json(&serde_json::json!({
+            "code": "estimate_provider_configuration_error",
+            "message": "estimate provider configuration is missing or invalid"
+        }));
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn post_estimate_maps_provider_request_errors_to_provider_neutral_payload() {
+    let _guard = install_stub_service_request_failure();
+
+    request::<App, _, _>(|request, _ctx| async move {
+        let res = request
+            .post("/api/estimate")
+            .json(&serde_json::json!({"task_description":"Dodaj endpoint API"}))
+            .await;
+
+        assert_eq!(res.status_code(), 502);
+        res.assert_json(&serde_json::json!({
+            "code": "estimate_provider_request_failed",
+            "message": "failed to get estimate from upstream provider"
+        }));
     })
     .await;
 }

@@ -70,14 +70,14 @@ mod tests {
     #[tokio::test]
     async fn estimate_task_returns_validated_estimate_when_model_output_is_valid() {
         let text_service = StubEstimateTextService {
-            response_text: r#"{"price_usdc": 380, "complexity": 3, "rationale": "Zakres średni."}"#
+            response_text: r#"{"price_sol": 380, "complexity": 3, "rationale": "Zakres średni."}"#
                 .to_string(),
         };
 
         let result = estimate_task("Dodaj API endpoint", &text_service).await;
         assert!(result.is_ok());
         if let Ok(estimate) = result {
-            assert_eq!(estimate.price_usdc, 380.0);
+            assert_eq!(estimate.price_sol, 380.0);
             assert_eq!(estimate.complexity, 3);
             assert_eq!(estimate.rationale, "Zakres średni.");
         }
@@ -92,7 +92,7 @@ mod tests {
         let result = estimate_task("Dodaj API endpoint", &text_service).await;
         assert!(result.is_ok());
         if let Ok(estimate) = result {
-            assert!((1.0..=100_000.0).contains(&estimate.price_usdc));
+            assert!((1.0..=100_000.0).contains(&estimate.price_sol));
             assert!((1..=5).contains(&i32::from(estimate.complexity)));
             assert!(estimate.rationale.contains("Użyto fallbacku estymacji"));
         }

@@ -24,7 +24,7 @@ impl EstimateRequest {
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(clippy::module_name_repetitions)]
 pub struct EstimateResponse {
-    pub price_usdc: f64,
+    pub price_sol: f64,
     pub complexity: u8,
     pub rationale: String,
 }
@@ -122,7 +122,7 @@ impl EstimateServiceErrorResponse {
 impl From<crate::services::estimate_output::ValidatedEstimate> for EstimateResponse {
     fn from(value: crate::services::estimate_output::ValidatedEstimate) -> Self {
         Self {
-            price_usdc: value.price_usdc,
+            price_sol: value.price_sol,
             complexity: value.complexity,
             rationale: value.rationale,
         }

@@ -1,7 +1,7 @@
 use serde_json::Value;
 
-const MIN_PRICE_USDC: f64 = 1.0;
-const MAX_PRICE_USDC: f64 = 100_000.0;
+const MIN_PRICE_SOL: f64 = 1.0;
+const MAX_PRICE_SOL: f64 = 100_000.0;
 const PRICE_PRECISION_SCALE: f64 = 100.0;
 const MIN_COMPLEXITY: i64 = 1;
 const MAX_COMPLEXITY: i64 = 5;
@@ -11,7 +11,7 @@ const FALLBACK_MAX_WORDS: usize = 80;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ValidatedEstimate {
-    pub price_usdc: f64,
+    pub price_sol: f64,
     pub complexity: u8,
     pub rationale: String,
 }
@@ -144,34 +144,34 @@ fn validate_json_estimate(value: &Value) -> Result<ValidatedEstimate, String> {
         .as_object()
         .ok_or_else(|| "model output must be a JSON object".to_string())?;
 
-    let price = parse_price_field(object.get("price_usdc"))?;
+    let price = parse_price_field(object.get("price_sol"))?;
     let complexity = parse_complexity_field(object.get("complexity"))?;
     let rationale = parse_rationale_field(object.get("rationale"))?;
 
     Ok(ValidatedEstimate {
-        price_usdc: price,
+        price_sol: price,
         complexity,
         rationale,
     })
 }
 
 fn parse_price_field(price_value: Option<&Value>) -> Result<f64, String> {
-    let raw_price = price_value.ok_or_else(|| "missing required field: price_usdc".to_string())?;
+    let raw_price = price_value.ok_or_else(|| "missing required field: price_sol".to_string())?;
 
     let price = match raw_price {
         Value::Number(number) => number
             .as_f64()
-            .ok_or_else(|| "price_usdc must be numeric".to_string())?,
+            .ok_or_else(|| "price_sol must be numeric".to_string())?,
         Value::String(raw_number) => raw_number
             .trim()
             .parse::<f64>()
-            .map_err(|_| "price_usdc string value must be numeric".to_string())?,
-        _ => return Err("price_usdc must be numeric".to_string()),
+            .map_err(|_| "price_sol string value must be numeric".to_string())?,
+        _ => return Err("price_sol must be numeric".to_string()),
     };
 
-    if !price.is_finite() || !(MIN_PRICE_USDC..=MAX_PRICE_USDC).contains(&price) {
+    if !price.is_finite() || !(MIN_PRICE_SOL..=MAX_PRICE_SOL).contains(&price) {
         return Err(format!(
-            "price_usdc must be within [{MIN_PRICE_USDC}, {MAX_PRICE_USDC}]"
+            "price_sol must be within [{MIN_PRICE_SOL}, {MAX_PRICE_SOL}]"
         ));
     }
 
@@ -236,11 +236,11 @@ fn build_fallback_estimate(task_description: &str, failure_reason: &str) -> Vali
     let bounded_words = word_count.min(FALLBACK_MAX_WORDS) as f64;
     let estimated_price = (f64::from(complexity) * FALLBACK_BASE_PRICE_PER_COMPLEXITY)
         + (bounded_words * FALLBACK_PRICE_PER_WORD);
-    let bounded_price = estimated_price.clamp(MIN_PRICE_USDC, MAX_PRICE_USDC);
-    let price_usdc = round_two_decimals(bounded_price);
+    let bounded_price = estimated_price.clamp(MIN_PRICE_SOL, MAX_PRICE_SOL);
+    let price_sol = round_two_decimals(bounded_price);
 
     ValidatedEstimate {
-        price_usdc,
+        price_sol,
         complexity,
         rationale: format!(
             "Użyto fallbacku estymacji, ponieważ odpowiedź modelu była niepoprawna ({normalized_reason}). \
@@ -278,13 +278,12 @@ mod tests {
 
     #[test]
     fn valid_json_is_passed_through_without_fallback() {
-        let output =
-            r#"{"price_usdc": 320.5, "complexity": 3, "rationale": "Zakres jest średni."}"#;
+        let output = r#"{"price_sol": 320.5, "complexity": 3, "rationale": "Zakres jest średni."}"#;
 
         let result = parse_and_validate_estimate_output("Dodaj endpoint i testy.", output);
 
         assert!(!result.used_fallback);
-        assert_eq!(result.estimate.price_usdc, 320.5);
+        assert_eq!(result.estimate.price_sol, 320.5);
         assert_eq!(result.estimate.complexity, 3);
         assert_eq!(result.estimate.rationale, "Zakres jest średni.");
     }
@@ -303,14 +302,14 @@ mod tests {
                 .contains("Użyto fallbacku estymacji")
         );
         assert!(result.estimate.rationale.contains("niepoprawna"));
-        assert!((1.0..=100_000.0).contains(&result.estimate.price_usdc));
+        assert!((1.0..=100_000.0).contains(&result.estimate.price_sol));
         assert!((1..=5).contains(&i32::from(result.estimate.complexity)));
     }
 
     #[test]
     fn out_of_range_complexity_uses_fallback_with_explicit_reason() {
         let output =
-            r#"{"price_usdc": 600, "complexity": 8, "rationale": "Model podał zły poziom."}"#;
+            r#"{"price_sol": 600, "complexity": 8, "rationale": "Model podał zły poziom."}"#;
 
         let result = parse_and_validate_estimate_output(
             "Integracja z płatnościami, logowanie i panel administracyjny.",
@@ -329,42 +328,41 @@ mod tests {
 
     #[test]
     fn parses_json_embedded_in_text() {
-        let output = "Oto wynik:\n{\"price_usdc\": \"400.0\", \"complexity\": \"4\", \"rationale\": \"Wymaga integracji.\"}\nDziękuję.";
+        let output = "Oto wynik:\n{\"price_sol\": \"400.0\", \"complexity\": \"4\", \"rationale\": \"Wymaga integracji.\"}\nDziękuję.";
 
         let result = parse_and_validate_estimate_output("Integracja API.", output);
 
         assert!(!result.used_fallback);
-        assert_eq!(result.estimate.price_usdc, 400.0);
+        assert_eq!(result.estimate.price_sol, 400.0);
         assert_eq!(result.estimate.complexity, 4);
     }
 
     #[test]
     fn parses_first_valid_json_object_when_text_contains_invalid_braces_before_it() {
-        let output = "Szkic: {not-json}\nFinalna odpowiedź:\n{\"price_usdc\": 410, \"complexity\": 3, \"rationale\": \"To jest poprawna odpowiedź.\"}";
+        let output = "Szkic: {not-json}\nFinalna odpowiedź:\n{\"price_sol\": 410, \"complexity\": 3, \"rationale\": \"To jest poprawna odpowiedź.\"}";
 
         let result = parse_and_validate_estimate_output("Integracja API.", output);
 
         assert!(!result.used_fallback);
-        assert_eq!(result.estimate.price_usdc, 410.0);
+        assert_eq!(result.estimate.price_sol, 410.0);
         assert_eq!(result.estimate.complexity, 3);
         assert_eq!(result.estimate.rationale, "To jest poprawna odpowiedź.");
     }
 
     #[test]
     fn price_is_normalized_to_two_decimal_places() {
-        let output =
-            r#"{"price_usdc": 123.456, "complexity": 2, "rationale": "Zakres jest mały."}"#;
+        let output = r#"{"price_sol": 123.456, "complexity": 2, "rationale": "Zakres jest mały."}"#;
 
         let result = parse_and_validate_estimate_output("Dodaj endpoint.", output);
 
         assert!(!result.used_fallback);
-        assert_eq!(result.estimate.price_usdc, 123.46);
+        assert_eq!(result.estimate.price_sol, 123.46);
     }
 
     #[test]
     fn fractional_complexity_uses_fallback() {
         let output =
-            r#"{"price_usdc": 123.45, "complexity": 2.5, "rationale": "Zakres jest mały."}"#;
+            r#"{"price_sol": 123.45, "complexity": 2.5, "rationale": "Zakres jest mały."}"#;
 
         let result = parse_and_validate_estimate_output("Dodaj endpoint.", output);
 
@@ -379,7 +377,7 @@ mod tests {
 
     #[test]
     fn blank_rationale_uses_fallback() {
-        let output = r#"{"price_usdc": 123.45, "complexity": 2, "rationale": "   "}"#;
+        let output = r#"{"price_sol": 123.45, "complexity": 2, "rationale": "   "}"#;
 
         let result = parse_and_validate_estimate_output("Dodaj endpoint.", output);
 
@@ -394,7 +392,7 @@ mod tests {
 
     #[test]
     fn missing_required_field_uses_fallback_with_explicit_reason() {
-        let output = r#"{"price_usdc": 123.45, "rationale": "Brakuje complexity"}"#;
+        let output = r#"{"price_sol": 123.45, "rationale": "Brakuje complexity"}"#;
 
         let result = parse_and_validate_estimate_output("Dodaj endpoint.", output);
 
