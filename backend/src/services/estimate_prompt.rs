@@ -1,21 +1,4 @@
-const SYSTEM_PROMPT: &str = r#"You are an expert software project estimator.
-Your goal is to break a project into tasks and estimate each task.
-Return prices only in SOL and complexity on a 1-5 scale.
-Return only valid JSON with this structure:
-{
-  "tasks": [
-    {
-      "title": "<short title>",
-      "description": "<task scope>",
-      "price_sol": <positive number>,
-      "complexity": <1-5>,
-      "rationale": "<short rationale>"
-    }
-  ],
-  "rationale": "<short project summary>"
-}.
-Return between 2 and 6 tasks.
-Use English for all rationales."#;
+const SYSTEM_PROMPT: &str = include_str!("../../assets/PROMPT.md");
 
 #[derive(Debug, Clone, Copy)]
 struct FewShotExample {
