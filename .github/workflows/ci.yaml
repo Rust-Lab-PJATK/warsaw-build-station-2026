@@ -17,6 +17,9 @@ jobs:
 
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout the code
@@ -37,6 +40,9 @@ jobs:
 
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout the code
@@ -46,6 +52,8 @@ jobs:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
       - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
@@ -58,7 +66,10 @@ jobs:
 
     permissions:
       contents: read
-    
+    defaults:
+      run:
+        working-directory: backend
+
     services:
       redis:
         image: redis
@@ -99,4 +110,3 @@ jobs:
         env:
           REDIS_URL: redis://localhost:${{job.services.redis.ports[6379]}}
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres_test
-          
