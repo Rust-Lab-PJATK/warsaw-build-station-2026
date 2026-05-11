@@ -3,6 +3,8 @@ use serde_json::Value;
 
 const MIN_PRICE_SOL: f64 = 1.0;
 const MAX_PRICE_SOL: f64 = 100_000.0;
+const MIN_ESTIMATED_HOURS: f64 = 0.5;
+const MAX_ESTIMATED_HOURS: f64 = 2_000.0;
 const PRICE_PRECISION_SCALE: f64 = 100.0;
 const MIN_COMPLEXITY: i64 = 1;
 const MAX_COMPLEXITY: i64 = 5;
@@ -14,6 +16,7 @@ const FALLBACK_MAX_WORDS: usize = 80;
 pub struct ValidatedTaskEstimate {
     pub title: String,
     pub description: String,
+    pub estimated_hours: f64,
     pub price_sol: f64,
     pub complexity: u8,
     pub rationale: String,
@@ -192,6 +195,7 @@ fn parse_task(index: usize, value: &Value) -> Result<ValidatedTaskEstimate, Stri
     let title = parse_non_empty_string_field(object.get("title"), "title", Some(index))?;
     let description =
         parse_non_empty_string_field(object.get("description"), "description", Some(index))?;
+    let estimated_hours = parse_estimated_hours_field(object.get("estimated_hours"), Some(index))?;
     let price_sol = parse_price_field(object.get("price_sol"), Some(index))?;
     let complexity = parse_complexity_field(object.get("complexity"), Some(index))?;
     let rationale =
@@ -200,10 +204,44 @@ fn parse_task(index: usize, value: &Value) -> Result<ValidatedTaskEstimate, Stri
     Ok(ValidatedTaskEstimate {
         title,
         description,
+        estimated_hours,
         price_sol,
         complexity,
         rationale,
     })
+}
+
+fn parse_estimated_hours_field(
+    estimated_hours_value: Option<&Value>,
+    task_index: Option<usize>,
+) -> Result<f64, String> {
+    let field_name = task_index
+        .map(|index| format!("tasks[{index}].estimated_hours"))
+        .unwrap_or_else(|| "estimated_hours".to_string());
+
+    let raw_hours =
+        estimated_hours_value.ok_or_else(|| format!("missing required field: {field_name}"))?;
+
+    let estimated_hours = match raw_hours {
+        Value::Number(number) => number
+            .as_f64()
+            .ok_or_else(|| format!("{field_name} must be numeric"))?,
+        Value::String(raw_number) => raw_number
+            .trim()
+            .parse::<f64>()
+            .map_err(|_| format!("{field_name} string value must be numeric"))?,
+        _ => return Err(format!("{field_name} must be numeric")),
+    };
+
+    if !estimated_hours.is_finite()
+        || !(MIN_ESTIMATED_HOURS..=MAX_ESTIMATED_HOURS).contains(&estimated_hours)
+    {
+        return Err(format!(
+            "{field_name} must be within [{MIN_ESTIMATED_HOURS}, {MAX_ESTIMATED_HOURS}]"
+        ));
+    }
+
+    Ok(round_two_decimals(estimated_hours))
 }
 
 fn parse_non_empty_string_field(
@@ -324,6 +362,10 @@ fn build_fallback_estimate(task_description: &str, failure_reason: &str) -> Vali
     let implementation_price = round_two_decimals(total_price_sol * 0.6);
     let qa_price =
         round_two_decimals((total_price_sol - analysis_price - implementation_price).max(1.0));
+    let analysis_hours = round_two_decimals((analysis_price / 0.8).max(MIN_ESTIMATED_HOURS));
+    let implementation_hours =
+        round_two_decimals((implementation_price / 0.8).max(MIN_ESTIMATED_HOURS));
+    let qa_hours = round_two_decimals((qa_price / 0.8).max(MIN_ESTIMATED_HOURS));
 
     let analysis_complexity = overall_complexity.saturating_sub(1).max(1);
     let qa_complexity = (overall_complexity + 1).min(5);
@@ -333,6 +375,7 @@ fn build_fallback_estimate(task_description: &str, failure_reason: &str) -> Vali
             title: "Analiza wymagań".to_string(),
             description: "Doprecyzowanie zakresu i podział projektu na etapy realizacji."
                 .to_string(),
+            estimated_hours: analysis_hours,
             price_sol: analysis_price,
             complexity: analysis_complexity,
             rationale: "Task obejmuje analizę i przygotowanie planu realizacji.".to_string(),
@@ -340,6 +383,7 @@ fn build_fallback_estimate(task_description: &str, failure_reason: &str) -> Vali
         ValidatedTaskEstimate {
             title: "Implementacja".to_string(),
             description: "Wykonanie głównej funkcjonalności projektu zgodnie z opisem.".to_string(),
+            estimated_hours: implementation_hours,
             price_sol: implementation_price,
             complexity: overall_complexity,
             rationale: "To rdzeń projektu wymagający najwięcej pracy inżynierskiej.".to_string(),
@@ -347,6 +391,7 @@ fn build_fallback_estimate(task_description: &str, failure_reason: &str) -> Vali
         ValidatedTaskEstimate {
             title: "Testy i odbiór".to_string(),
             description: "Walidacja jakości, poprawki i przygotowanie do przekazania.".to_string(),
+            estimated_hours: qa_hours,
             price_sol: qa_price,
             complexity: qa_complexity,
             rationale: "Task domyka realizację i minimalizuje ryzyko regresji.".to_string(),
@@ -398,6 +443,7 @@ mod tests {
             {
               "title": "Analiza",
               "description": "Rozbicie zakresu.",
+              "estimated_hours": 12,
               "price_sol": 120.5,
               "complexity": 2,
               "rationale": "Niski poziom ryzyka."
@@ -405,6 +451,7 @@ mod tests {
             {
               "title": "Implementacja",
               "description": "Kod i integracje.",
+              "estimated_hours": 30,
               "price_sol": 300,
               "complexity": 4,
               "rationale": "Największy nakład pracy."
@@ -420,6 +467,7 @@ mod tests {
         assert_eq!(result.estimate.total_price_sol, 420.5);
         assert_eq!(result.estimate.overall_complexity, 4);
         assert_eq!(result.estimate.tasks[0].title, "Analiza");
+        assert_eq!(result.estimate.tasks[0].estimated_hours, 12.0);
     }
 
     #[test]
@@ -445,6 +493,7 @@ mod tests {
           "tasks": [{
             "title": "Implementacja",
             "description": "Kod",
+            "estimated_hours": 55,
             "price_sol": 500,
             "complexity": 8,
             "rationale": "Za wysoko."
@@ -464,12 +513,13 @@ mod tests {
 
     #[test]
     fn parses_json_embedded_in_text() {
-        let output = "Wynik:\n{\"tasks\":[{\"title\":\"A\",\"description\":\"B\",\"price_sol\":\"90\",\"complexity\":\"2\",\"rationale\":\"ok\"}]}\nDziękuję.";
+        let output = "Wynik:\n{\"tasks\":[{\"title\":\"A\",\"description\":\"B\",\"estimated_hours\":\"8\",\"price_sol\":\"90\",\"complexity\":\"2\",\"rationale\":\"ok\"}]}\nDziękuję.";
 
         let result = parse_and_validate_estimate_output("Małe zadanie.", output);
 
         assert!(!result.used_fallback);
         assert_eq!(result.estimate.tasks.len(), 1);
+        assert_eq!(result.estimate.tasks[0].estimated_hours, 8.0);
         assert_eq!(result.estimate.tasks[0].price_sol, 90.0);
     }
 

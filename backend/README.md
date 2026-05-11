@@ -41,6 +41,7 @@ Invalid JSON/non-object body also returns **400** with `code: "validation_error"
     {
       "title": "Backend",
       "description": "Implementacja endpointów",
+      "estimated_hours": 24.0,
       "price_sol": 380.0,
       "complexity": 3,
       "rationale": "Zakres średni."
@@ -56,6 +57,7 @@ Response fields are always:
 - `tasks` (non-empty array),
 - `tasks[].title` (non-empty string),
 - `tasks[].description` (non-empty string),
+- `tasks[].estimated_hours` (number, normalized to 2 decimals),
 - `tasks[].price_sol` (number, normalized to 2 decimals),
 - `tasks[].complexity` (1..=5),
 - `tasks[].rationale` (non-empty string),

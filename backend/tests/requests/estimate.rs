@@ -124,6 +124,7 @@ async fn post_estimate_returns_success_payload_shape() {
             {
               "title":"Backend",
               "description":"Implementacja endpointów",
+              "estimated_hours": 24,
               "price_sol": 380,
               "complexity": 3,
               "rationale":"Zakres średni."
@@ -146,6 +147,7 @@ async fn post_estimate_returns_success_payload_shape() {
                 {
                     "title": "Backend",
                     "description": "Implementacja endpointów",
+                    "estimated_hours": 24.0,
                     "price_sol": 380.0,
                     "complexity": 3,
                     "rationale": "Zakres średni."
@@ -270,6 +272,7 @@ async fn post_estimate_returns_success_even_when_rag_sync_fails() {
             {
               "title":"Backend",
               "description":"Implementacja endpointów",
+              "estimated_hours": 24,
               "price_sol": 380,
               "complexity": 3,
               "rationale":"Zakres średni."
@@ -292,6 +295,7 @@ async fn post_estimate_returns_success_even_when_rag_sync_fails() {
                 {
                     "title": "Backend",
                     "description": "Implementacja endpointów",
+                    "estimated_hours": 24.0,
                     "price_sol": 380.0,
                     "complexity": 3,
                     "rationale": "Zakres średni."
