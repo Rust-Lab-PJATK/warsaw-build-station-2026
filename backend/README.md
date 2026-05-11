@@ -78,6 +78,9 @@ Response fields are always:
   - `ELEVENLABS_AGENT_ID` (required)
   - `ELEVENLABS_BASE_URL` (optional, default: `https://api.elevenlabs.io`)
   - `ELEVENLABS_SIMULATION_TURNS_LIMIT` (optional, default: `8`)
+  - RAG sync (best-effort, non-blocking):
+    - `ELEVENLABS_RAG_UPSERT_URL` (optional; if missing, backend uses default `POST /v1/convai/knowledge-base/text`)
+    - `ELEVENLABS_RAG_PARENT_FOLDER_ID` (optional but recommended; places documents directly in the agent KB folder)
 - OpenAI (required only when `ESTIMATE_PROVIDER=openai`):
   - `OPENAI_API_KEY` (required)
   - `OPENAI_MODEL` (optional, default: `gpt-4o-mini`)
@@ -87,3 +90,15 @@ Response fields are always:
 If upstream provider responds but output cannot be parsed/validated as required JSON (`tasks[]` and
 task fields), the endpoint still returns **200** with a deterministic fallback estimate in the same
 project-task shape. In that case, `rationale` explains fallback use and includes parser failure reason.
+
+### RAG synchronization behavior
+
+After successful estimate generation, backend tries to upsert each estimated task to ElevenLabs
+Knowledge Base (RAG). This sync is **best-effort**:
+- endpoint response remains **200** even if RAG sync fails,
+- RAG failures are logged with explicit reasons,
+- document IDs are deterministic hashes to support idempotent upserts and reduce duplicates.
+
+To keep inserted RAG documents attached to the target agent context, backend sends `agent_id`
+query param (`ELEVENLABS_AGENT_ID`) on creation. For strict placement inside a specific folder
+visible in that agent, set `ELEVENLABS_RAG_PARENT_FOLDER_ID`.

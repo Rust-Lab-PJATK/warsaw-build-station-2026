@@ -634,6 +634,7 @@ dependencies = [
  "solana-client",
  "solana-sdk",
  "solana-transaction-status",
+ "sha2",
  "tokio",
  "tracing",
  "tracing-subscriber",

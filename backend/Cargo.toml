@@ -32,6 +32,7 @@ chrono = { version = "0.4", features = ["serde"] }
 solana-sdk = "2.0"
 solana-client = "2.0"
 solana-transaction-status = "2.0"
+sha2 = "0.10"
 
 [[bin]]
 name = "backend-cli"
