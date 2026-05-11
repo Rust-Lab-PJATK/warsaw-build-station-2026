@@ -47,6 +47,12 @@ settings:
   elevenlabs_api_key: {{ get_env(name="ELEVENLABS_API_KEY") }}
   elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID") }}
   elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL") }}
+  elevenlabs_conversation_ws_url: {{ get_env(name="ELEVENLABS_CONVERSATION_WS_URL", default="wss://api.elevenlabs.io/v1/convai/conversation") }}
+  elevenlabs_conversation_timeout_secs: {{ get_env(name="ELEVENLABS_CONVERSATION_TIMEOUT_SECS", default="600") }}
   elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT") }}
+  elevenlabs_simulated_user_language: {{ get_env(name="ELEVENLABS_SIMULATED_USER_LANGUAGE", default="en") }}
+  elevenlabs_simulated_user_prompt: {{ get_env(name="ELEVENLABS_SIMULATED_USER_PROMPT", default="") }}
+  elevenlabs_simulated_user_llm: {{ get_env(name="ELEVENLABS_SIMULATED_USER_LLM", default="") }}
+  elevenlabs_use_backend_prompt: {{ get_env(name="ELEVENLABS_USE_BACKEND_PROMPT", default="false") }}
   elevenlabs_rag_parent_folder_id: {{ get_env(name="ELEVENLABS_RAG_PARENT_FOLDER_ID", default="") }}
   elevenlabs_rag_upsert_url: {{ get_env(name="ELEVENLABS_RAG_UPSERT_URL", default="") }}
