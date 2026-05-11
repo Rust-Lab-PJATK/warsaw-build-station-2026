@@ -77,7 +77,13 @@ Response fields are always:
   - `ELEVENLABS_API_KEY` (required)
   - `ELEVENLABS_AGENT_ID` (required)
   - `ELEVENLABS_BASE_URL` (optional, default: `https://api.elevenlabs.io`)
+  - `ELEVENLABS_CONVERSATION_WS_URL` (optional, default: `wss://api.elevenlabs.io/v1/convai/conversation`)
+  - `ELEVENLABS_CONVERSATION_TIMEOUT_SECS` (optional, default: `600`)
   - `ELEVENLABS_SIMULATION_TURNS_LIMIT` (optional, default: `8`)
+  - `ELEVENLABS_SIMULATED_USER_LANGUAGE` (optional, default: `en`)
+  - `ELEVENLABS_SIMULATED_USER_PROMPT` (optional; when set, overrides simulated user prompt sent in request)
+  - `ELEVENLABS_SIMULATED_USER_LLM` (optional; used together with `ELEVENLABS_SIMULATED_USER_PROMPT`)
+  - `ELEVENLABS_USE_BACKEND_PROMPT` (optional boolean, default: `false`; when `false`, backend sends raw task description and relies on agent-side prompt/settings)
   - RAG sync (best-effort, non-blocking):
     - `ELEVENLABS_RAG_UPSERT_URL` (optional; if missing, backend uses default `POST /v1/convai/knowledge-base/text`)
     - `ELEVENLABS_RAG_PARENT_FOLDER_ID` (optional but recommended; places documents directly in the agent KB folder)

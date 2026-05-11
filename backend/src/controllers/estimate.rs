@@ -71,13 +71,12 @@ async fn estimate(
 
     match estimate_task(&request.task_description, llm_service.as_ref()).await {
         Ok(estimate) => {
-            sync_estimate_to_rag_best_effort(&request.task_description, &estimate).await;
-
             let job = Job::from(&estimate);
             if let Err(e) = job_service.save(&job).await {
                 tracing::error!("Failed to save job: {}", e);
             }
 
+            // sync_estimate_to_rag_best_effort(&request.task_description, &estimate).await;
             Ok(json_response(
                 StatusCode::OK,
                 EstimateResponse::from(estimate),

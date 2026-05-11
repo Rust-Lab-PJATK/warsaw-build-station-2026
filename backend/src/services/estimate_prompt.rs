@@ -1,4 +1,4 @@
-const SYSTEM_PROMPT: &str = include_str!("../../assets/PROMPT.md");
+pub const SYSTEM_PROMPT: &str = include_str!("../../assets/PROMPT.md");
 
 #[derive(Debug, Clone, Copy)]
 struct FewShotExample {

@@ -18,6 +18,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
 tokio = { version = "1.45", default-features = false, features = [
   "rt-multi-thread",
+  "net",
+  "time",
 ] }
 async-trait = { version = "0.1" }
 axum = { version = "0.8" }
@@ -33,6 +35,9 @@ solana-sdk = "2.0"
 solana-client = "2.0"
 solana-transaction-status = "2.0"
 sha2 = "0.10"
+futures-util = "0.3"
+tokio-tungstenite = { version = "0.28", default-features = false, features = ["native-tls", "rustls-tls-webpki-roots", "connect"] }
+rustls = "0.23.40"
 
 [[bin]]
 name = "backend-cli"
