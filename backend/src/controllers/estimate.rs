@@ -1,7 +1,7 @@
 use std::sync::{Arc, OnceLock, RwLock};
 
 use axum::{
-    Json,
+    Extension, Json,
     body::Bytes,
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -11,6 +11,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
+    data::job::Job,
     services::{
         estimate::{
             EstimateServiceError, EstimateTextService, EstimateTextServiceFactory,
@@ -22,6 +23,7 @@ use crate::{
             EstimateRagSyncError, EstimateRagSyncService, EstimateRagSyncServiceFactory,
             build_estimate_rag_sync_service_from_env,
         },
+        job::JobService,
     },
     views::estimate::{
         EstimateRequest, EstimateResponse, EstimateServiceErrorResponse,
@@ -45,7 +47,10 @@ static ESTIMATE_RAG_SYNC_FACTORY_OVERRIDE: OnceLock<
 > = OnceLock::new();
 
 #[debug_handler]
-async fn estimate(body: Bytes) -> Result<Response> {
+async fn estimate(
+    Extension(job_service): Extension<Arc<JobService>>,
+    body: Bytes,
+) -> Result<Response> {
     let request = match parse_request(&body) {
         Ok(request) => request,
         Err(validation_error) => {
@@ -67,6 +72,12 @@ async fn estimate(body: Bytes) -> Result<Response> {
     match estimate_task(&request.task_description, llm_service.as_ref()).await {
         Ok(estimate) => {
             sync_estimate_to_rag_best_effort(&request.task_description, &estimate).await;
+
+            let job = Job::from(&estimate);
+            if let Err(e) = job_service.save(&job).await {
+                tracing::error!("Failed to save job: {}", e);
+            }
+
             Ok(json_response(
                 StatusCode::OK,
                 EstimateResponse::from(estimate),

@@ -1,3 +1,4 @@
+use crate::services::estimate_output::{ValidatedEstimate, ValidatedTaskEstimate};
 use serde::{Deserialize, Serialize};
 
 /// Job status state machine
@@ -38,6 +39,34 @@ pub struct JobTask {
     pub rationale: String,
 }
 
+impl JobTask {
+    pub fn new(
+        title: String,
+        description: String,
+        price_sol: f64,
+        complexity: u8,
+        rationale: String,
+    ) -> Self {
+        Self {
+            title,
+            description,
+            price_sol,
+            complexity,
+            rationale,
+        }
+    }
+
+    pub fn from(estimate_task: &ValidatedTaskEstimate) -> Self {
+        Self::new(
+            estimate_task.title.clone(),
+            estimate_task.description.clone(),
+            estimate_task.price_sol,
+            estimate_task.complexity,
+            estimate_task.rationale.clone(),
+        )
+    }
+}
+
 /// Complete job document in MongoDB (jobs collection)
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Job {
@@ -72,6 +101,17 @@ impl Job {
             created_at: Some(now.clone()),
             updated_at: Some(now),
         }
+    }
+
+    pub fn from(estimate: &ValidatedEstimate) -> Self {
+        let tasks = estimate.tasks.iter().map(JobTask::from).collect::<Vec<_>>();
+
+        Self::new(
+            tasks,
+            estimate.total_price_sol,
+            estimate.overall_complexity,
+            estimate.rationale.clone(),
+        )
     }
 
     /// Transition to next job status
