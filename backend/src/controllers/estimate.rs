@@ -17,12 +17,18 @@ use crate::{
             build_estimate_text_service_from_env,
         },
         estimate_flow::{EstimateFlowError, estimate_task},
+        estimate_output::ValidatedEstimate,
+        estimate_rag::{
+            EstimateRagSyncError, EstimateRagSyncService, EstimateRagSyncServiceFactory,
+            build_estimate_rag_sync_service_from_env,
+        },
     },
     views::estimate::{
         EstimateRequest, EstimateResponse, EstimateServiceErrorResponse,
         EstimateValidationErrorResponse,
     },
 };
+use tracing::warn;
 
 const ESTIMATE_PROVIDER_CONFIGURATION_ERROR_CODE: &str = "estimate_provider_configuration_error";
 const ESTIMATE_PROVIDER_CONFIGURATION_ERROR_MESSAGE: &str =
@@ -33,6 +39,9 @@ const ESTIMATE_PROVIDER_REQUEST_FAILED_MESSAGE: &str =
 
 static ESTIMATE_SERVICE_FACTORY_OVERRIDE: OnceLock<
     RwLock<Option<Arc<EstimateTextServiceFactory>>>,
+> = OnceLock::new();
+static ESTIMATE_RAG_SYNC_FACTORY_OVERRIDE: OnceLock<
+    RwLock<Option<Arc<EstimateRagSyncServiceFactory>>>,
 > = OnceLock::new();
 
 #[debug_handler]
@@ -56,10 +65,13 @@ async fn estimate(body: Bytes) -> Result<Response> {
     };
 
     match estimate_task(&request.task_description, llm_service.as_ref()).await {
-        Ok(estimate) => Ok(json_response(
-            StatusCode::OK,
-            EstimateResponse::from(estimate),
-        )),
+        Ok(estimate) => {
+            sync_estimate_to_rag_best_effort(&request.task_description, &estimate).await;
+            Ok(json_response(
+                StatusCode::OK,
+                EstimateResponse::from(estimate),
+            ))
+        }
         Err(error) => Ok(map_flow_error(error)),
     }
 }
@@ -107,6 +119,49 @@ fn build_estimate_text_service()
     build_estimate_text_service_from_env()
 }
 
+fn estimate_rag_sync_factory_override()
+-> &'static RwLock<Option<Arc<EstimateRagSyncServiceFactory>>> {
+    ESTIMATE_RAG_SYNC_FACTORY_OVERRIDE.get_or_init(|| RwLock::new(None))
+}
+
+fn build_estimate_rag_sync_service()
+-> std::result::Result<Box<dyn EstimateRagSyncService>, EstimateRagSyncError> {
+    let override_factory = {
+        let lock = estimate_rag_sync_factory_override();
+        let guard = match lock.read() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        guard.clone()
+    };
+
+    if let Some(factory) = override_factory {
+        return factory();
+    }
+
+    build_estimate_rag_sync_service_from_env()
+}
+
+async fn sync_estimate_to_rag_best_effort(task_description: &str, estimate: &ValidatedEstimate) {
+    let rag_service = match build_estimate_rag_sync_service() {
+        Ok(service) => service,
+        Err(error) => {
+            warn!(
+                error = %error,
+                "estimate RAG sync skipped due to configuration/initialization error"
+            );
+            return;
+        }
+    };
+
+    if let Err(error) = rag_service
+        .sync_estimate_tasks(task_description, estimate)
+        .await
+    {
+        warn!(error = %error, "estimate RAG sync failed");
+    }
+}
+
 #[doc(hidden)]
 pub fn set_estimate_service_factory_for_tests<F>(factory: F)
 where
@@ -126,6 +181,32 @@ where
 #[doc(hidden)]
 pub fn clear_estimate_service_factory_for_tests() {
     let lock = estimate_service_factory_override();
+    let mut guard = match lock.write() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    *guard = None;
+}
+
+#[doc(hidden)]
+pub fn set_estimate_rag_sync_service_factory_for_tests<F>(factory: F)
+where
+    F: Fn() -> std::result::Result<Box<dyn EstimateRagSyncService>, EstimateRagSyncError>
+        + Send
+        + Sync
+        + 'static,
+{
+    let lock = estimate_rag_sync_factory_override();
+    let mut guard = match lock.write() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    *guard = Some(Arc::new(factory));
+}
+
+#[doc(hidden)]
+pub fn clear_estimate_rag_sync_service_factory_for_tests() {
+    let lock = estimate_rag_sync_factory_override();
     let mut guard = match lock.write() {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
