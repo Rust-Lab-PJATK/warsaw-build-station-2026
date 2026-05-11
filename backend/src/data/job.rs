@@ -4,15 +4,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum JobStatus {
-    /// Price estimation complete (Wyceniono)
+    /// Price estimation complete
     Priced,
     /// Deposit received (Deposit)
     Deposit,
-    /// Advance payment released (Zaliczka)
+    /// Advance payment released
     Advance,
     /// Work preview submitted (Preview)
-    Preview,
-    /// Work accepted and completed (Zaakceptowano)
+    AwaitingReview,
+    /// Work accepted and completed
     Accepted,
 }
 
@@ -22,7 +22,7 @@ impl std::fmt::Display for JobStatus {
             JobStatus::Priced => write!(f, "PRICED"),
             JobStatus::Deposit => write!(f, "DEPOSIT"),
             JobStatus::Advance => write!(f, "ADVANCE"),
-            JobStatus::Preview => write!(f, "PREVIEW"),
+            JobStatus::AwaitingReview => write!(f, "AWAITING_REVIEW"),
             JobStatus::Accepted => write!(f, "ACCEPTED"),
         }
     }
