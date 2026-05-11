@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use axum::Extension;
 use loco_rs::{
     Result,
     app::{AppContext, Hooks, Initializer},
@@ -9,19 +10,18 @@ use loco_rs::{
     environment::Environment,
     task::Tasks,
 };
+use std::sync::Arc;
 
+use crate::services::job::JobService;
 #[allow(unused_imports)]
 use crate::{
     controllers, initializers::MongoDbInitializer, tasks, workers::downloader::DownloadWorker,
 };
 
 pub struct App;
+
 #[async_trait]
 impl Hooks for App {
-    fn app_name() -> &'static str {
-        env!("CARGO_CRATE_NAME")
-    }
-
     fn app_version() -> String {
         format!(
             "{} ({})",
@@ -30,6 +30,10 @@ impl Hooks for App {
                 .or(option_env!("GITHUB_SHA"))
                 .unwrap_or("dev")
         )
+    }
+
+    fn app_name() -> &'static str {
+        env!("CARGO_CRATE_NAME")
     }
 
     async fn boot(
@@ -79,6 +83,11 @@ impl Hooks for App {
     //     }
     // }
 
+    async fn after_routes(router: axum::Router, _ctx: &AppContext) -> Result<axum::Router> {
+        let svc = Arc::new(JobService::from_env().await?);
+        Ok(router.layer(Extension(svc)))
+    }
+
     async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
         Ok(vec![Box::new(MongoDbInitializer)])
     }
@@ -87,7 +96,9 @@ impl Hooks for App {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::home::routes())
             .add_route(controllers::estimate::routes())
+            .add_route(controllers::job_api::routes())
     }
+
     async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
         queue.register(DownloadWorker::build(ctx)).await?;
         Ok(())

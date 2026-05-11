@@ -1,18 +1,19 @@
+use crate::services::estimate_output::{ValidatedEstimate, ValidatedTaskEstimate};
 use serde::{Deserialize, Serialize};
 
 /// Job status state machine
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum JobStatus {
-    /// Price estimation complete (Wyceniono)
+    /// Price estimation complete
     Priced,
     /// Deposit received (Deposit)
     Deposit,
-    /// Advance payment released (Zaliczka)
+    /// Advance payment released
     Advance,
     /// Work preview submitted (Preview)
-    Preview,
-    /// Work accepted and completed (Zaakceptowano)
+    AwaitingReview,
+    /// Work accepted and completed
     Accepted,
 }
 
@@ -22,7 +23,7 @@ impl std::fmt::Display for JobStatus {
             JobStatus::Priced => write!(f, "PRICED"),
             JobStatus::Deposit => write!(f, "DEPOSIT"),
             JobStatus::Advance => write!(f, "ADVANCE"),
-            JobStatus::Preview => write!(f, "PREVIEW"),
+            JobStatus::AwaitingReview => write!(f, "AWAITING_REVIEW"),
             JobStatus::Accepted => write!(f, "ACCEPTED"),
         }
     }
@@ -36,6 +37,34 @@ pub struct JobTask {
     pub price_sol: f64,
     pub complexity: u8,
     pub rationale: String,
+}
+
+impl JobTask {
+    pub fn new(
+        title: String,
+        description: String,
+        price_sol: f64,
+        complexity: u8,
+        rationale: String,
+    ) -> Self {
+        Self {
+            title,
+            description,
+            price_sol,
+            complexity,
+            rationale,
+        }
+    }
+
+    pub fn from(estimate_task: &ValidatedTaskEstimate) -> Self {
+        Self::new(
+            estimate_task.title.clone(),
+            estimate_task.description.clone(),
+            estimate_task.price_sol,
+            estimate_task.complexity,
+            estimate_task.rationale.clone(),
+        )
+    }
 }
 
 /// Complete job document in MongoDB (jobs collection)
@@ -75,6 +104,17 @@ impl Job {
             created_at: Some(now.clone()),
             updated_at: Some(now),
         }
+    }
+
+    pub fn from(estimate: &ValidatedEstimate) -> Self {
+        let tasks = estimate.tasks.iter().map(JobTask::from).collect::<Vec<_>>();
+
+        Self::new(
+            tasks,
+            estimate.total_price_sol,
+            estimate.overall_complexity,
+            estimate.rationale.clone(),
+        )
     }
 
     /// Transition to next job status

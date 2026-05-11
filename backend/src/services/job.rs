@@ -172,6 +172,3 @@ impl JobService {
         Ok(())
     }
 }
-
-// Backward compatibility alias
-pub type JobHistoryService = JobService;
