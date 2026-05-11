@@ -40,7 +40,8 @@ impl OnchainListener {
         })
     }
 
-    pub async fn tick(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn tick(&mut self)
+    -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let signatures = self.rpc.get_signatures_for_address_with_config(
             &self.program_id,
             RpcSignaturesForAddressConfig {
@@ -86,7 +87,7 @@ impl OnchainListener {
     async fn handle_result_approved(
         &self,
         task_pubkey: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let Some(mut job) = self.job_service.get_by_task_pubkey(task_pubkey).await? else {
             warn!("No job mapped to task_pubkey: {}", task_pubkey);
             return Ok(());

@@ -49,8 +49,12 @@ async fn link_task(Path(id): Path<String>, body: Bytes) -> Result<Response> {
         ));
     }
 
-    let job_service = JobService::from_env().await?;
-    let Some(mut job) = job_service.get_by_id(&id).await? else {
+    let job_service = JobService::from_env().await.map_err(loco_rs::Error::from)?;
+    let Some(mut job) = job_service
+        .get_by_id(&id)
+        .await
+        .map_err(loco_rs::Error::from)?
+    else {
         return Ok(json_response(
             StatusCode::NOT_FOUND,
             JobErrorResponse::new("job_not_found", "job not found"),
@@ -58,7 +62,10 @@ async fn link_task(Path(id): Path<String>, body: Bytes) -> Result<Response> {
     };
 
     job.task_pubkey = Some(task_pubkey.to_string());
-    job_service.update_by_id(&id, &job).await?;
+    job_service
+        .update_by_id(&id, &job)
+        .await
+        .map_err(loco_rs::Error::from)?;
 
     Ok(json_response(
         StatusCode::OK,
