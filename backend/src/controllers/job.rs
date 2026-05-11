@@ -13,9 +13,7 @@ use std::str::FromStr;
 
 use crate::{
     services::job::JobService,
-    views::job::{
-        JobErrorResponse, JobLinkTaskResponse, JobLinkTaskValidationErrorResponse,
-    },
+    views::job::{JobErrorResponse, JobLinkTaskResponse, JobLinkTaskValidationErrorResponse},
 };
 
 #[debug_handler]
@@ -73,8 +71,7 @@ async fn link_task(Path(id): Path<String>, body: Bytes) -> Result<Response> {
     ))
 }
 
-fn parse_request(body: &[u8])
--> Result<JobLinkTaskRequest, JobLinkTaskValidationErrorResponse> {
+fn parse_request(body: &[u8]) -> Result<JobLinkTaskRequest, JobLinkTaskValidationErrorResponse> {
     let raw_value = serde_json::from_slice::<Value>(body)
         .map_err(|_| JobLinkTaskValidationErrorResponse::for_invalid_json_body())?;
 
