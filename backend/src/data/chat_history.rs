@@ -8,7 +8,7 @@ pub struct ChatHistoryEntry {
     pub id: Option<String>,
     pub wallet_address: String,
     pub prompt: String,
-    pub job_id: i64,
+    pub job_id: String, // Changed from i64 to String (ObjectId)
     #[serde(default)]
     pub created_at: Option<String>,
     #[serde(default)]
@@ -16,7 +16,7 @@ pub struct ChatHistoryEntry {
 }
 
 impl ChatHistoryEntry {
-    pub fn new(wallet_address: String, prompt: String, job_id: i64) -> Self {
+    pub fn new(wallet_address: String, prompt: String, job_id: String) -> Self {
         let now = chrono::Utc::now().to_rfc3339();
         Self {
             id: Some(mongodb::bson::oid::ObjectId::new().to_hex()),

@@ -47,7 +47,6 @@ pub struct JobTaskResponse {
 #[allow(clippy::module_name_repetitions)]
 pub struct JobResponse {
     pub id: String,
-    pub job_id: i64,
     pub tasks: Vec<JobTaskResponse>,
     pub total_price_sol: f64,
     pub overall_complexity: u8,

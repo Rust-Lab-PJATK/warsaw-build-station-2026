@@ -35,7 +35,7 @@ impl JobService {
     pub async fn save(&self, job: &Job) -> Result<String, Box<dyn std::error::Error>> {
         let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Saving job for job_id: {}", job.job_id);
+        debug!("Saving job");
 
         let result = collection.insert_one(job).await?;
 
@@ -51,16 +51,14 @@ impl JobService {
         }
     }
 
-    /// Get a job by job_id
-    pub async fn get_by_job_id(
-        &self,
-        job_id: i64,
-    ) -> Result<Option<Job>, Box<dyn std::error::Error>> {
+    /// Get a job by ID
+    pub async fn get_by_id(&self, id: &str) -> Result<Option<Job>, Box<dyn std::error::Error>> {
         let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Fetching job for job_id: {}", job_id);
+        debug!("Fetching job by id: {}", id);
 
-        let job = collection.find_one(doc! { "job_id": job_id }).await?;
+        let object_id = mongodb::bson::oid::ObjectId::parse_str(id)?;
+        let job = collection.find_one(doc! { "_id": object_id }).await?;
 
         Ok(job)
     }
@@ -81,17 +79,22 @@ impl JobService {
         Ok(results)
     }
 
-    /// Update a job
-    pub async fn update(&self, job: &Job) -> Result<(), Box<dyn std::error::Error>> {
+    /// Update a job by ID
+    pub async fn update_by_id(
+        &self,
+        id: &str,
+        job: &Job,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Updating job for job_id: {}", job.job_id);
+        debug!("Updating job by id: {}", id);
 
         let mut updated_job = job.clone();
         updated_job.updated_at = Some(chrono::Utc::now().to_rfc3339());
 
+        let object_id = mongodb::bson::oid::ObjectId::parse_str(id)?;
         let result = collection
-            .replace_one(doc! { "job_id": job.job_id }, &updated_job)
+            .replace_one(doc! { "_id": object_id }, &updated_job)
             .await?;
 
         if result.matched_count == 0 {
@@ -102,13 +105,14 @@ impl JobService {
         Ok(())
     }
 
-    /// Delete a job by job_id
-    pub async fn delete_by_job_id(&self, job_id: i64) -> Result<(), Box<dyn std::error::Error>> {
+    /// Delete a job by ID
+    pub async fn delete_by_id(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
         let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Deleting job for job_id: {}", job_id);
+        debug!("Deleting job by id: {}", id);
 
-        let result = collection.delete_one(doc! { "job_id": job_id }).await?;
+        let object_id = mongodb::bson::oid::ObjectId::parse_str(id)?;
+        let result = collection.delete_one(doc! { "_id": object_id }).await?;
 
         if result.deleted_count == 0 {
             return Err("Job not found".into());
@@ -116,25 +120,6 @@ impl JobService {
 
         debug!("Job deleted successfully");
         Ok(())
-    }
-
-    /// Get next sequential job_id (counter-based approach)
-    pub async fn get_next_job_id(&self) -> Result<i64, Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<mongodb::bson::Document>("counters");
-
-        debug!("Getting next job_id counter");
-
-        let result = collection
-            .find_one_and_update(doc! { "_id": "job_id" }, doc! { "$inc": { "seq": 1i64 } })
-            .await?;
-
-        let job_id = match result {
-            Some(doc) => doc.get_i64("seq").unwrap_or(1),
-            None => 1,
-        };
-
-        debug!("Next job_id is: {}", job_id);
-        Ok(job_id)
     }
 }
 
