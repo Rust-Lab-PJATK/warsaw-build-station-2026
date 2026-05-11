@@ -96,7 +96,7 @@ impl Hooks for App {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::home::routes())
             .add_route(controllers::estimate::routes())
-            .add_route(controllers::job::routes())
+            .add_route(controllers::job_api::routes())
     }
 
     async fn connect_workers(ctx: &AppContext, queue: &Queue) -> Result<()> {
