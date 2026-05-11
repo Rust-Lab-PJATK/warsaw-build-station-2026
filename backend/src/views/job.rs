@@ -129,6 +129,92 @@ impl JobErrorResponse {
     }
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+#[allow(clippy::module_name_repetitions)]
+pub struct JobLinkTaskResponse {
+    pub id: String,
+    pub task_pubkey: String,
+}
+
+impl JobLinkTaskResponse {
+    #[must_use]
+    pub fn new(id: String, task_pubkey: String) -> Self {
+        Self { id, task_pubkey }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+#[allow(clippy::module_name_repetitions)]
+pub struct JobLinkTaskValidationErrorResponse {
+    pub code: String,
+    pub message: String,
+    pub field_errors: BTreeMap<String, Vec<String>>,
+}
+
+impl JobLinkTaskValidationErrorResponse {
+    const VALIDATION_ERROR_CODE: &'static str = "validation_error";
+
+    #[must_use]
+    pub fn for_invalid_json_body() -> Self {
+        Self {
+            code: Self::VALIDATION_ERROR_CODE.to_string(),
+            message: "request body must be valid JSON".to_string(),
+            field_errors: BTreeMap::new(),
+        }
+    }
+
+    #[must_use]
+    pub fn for_non_object_body() -> Self {
+        Self {
+            code: Self::VALIDATION_ERROR_CODE.to_string(),
+            message: "request body must be a JSON object".to_string(),
+            field_errors: BTreeMap::new(),
+        }
+    }
+
+    #[must_use]
+    pub fn for_missing_task_pubkey() -> Self {
+        let mut field_errors = BTreeMap::new();
+        field_errors.insert("task_pubkey".to_string(), vec!["is required".to_string()]);
+
+        Self {
+            code: Self::VALIDATION_ERROR_CODE.to_string(),
+            message: "Validation failed".to_string(),
+            field_errors,
+        }
+    }
+
+    #[must_use]
+    pub fn for_blank_task_pubkey() -> Self {
+        let mut field_errors = BTreeMap::new();
+        field_errors.insert(
+            "task_pubkey".to_string(),
+            vec!["must not be blank".to_string()],
+        );
+
+        Self {
+            code: Self::VALIDATION_ERROR_CODE.to_string(),
+            message: "Validation failed".to_string(),
+            field_errors,
+        }
+    }
+
+    #[must_use]
+    pub fn for_invalid_task_pubkey() -> Self {
+        let mut field_errors = BTreeMap::new();
+        field_errors.insert(
+            "task_pubkey".to_string(),
+            vec!["must be a valid Solana pubkey".to_string()],
+        );
+
+        Self {
+            code: Self::VALIDATION_ERROR_CODE.to_string(),
+            message: "Validation failed".to_string(),
+            field_errors,
+        }
+    }
+}
+
 // Backward compatibility aliases
 pub type JobHistoryRequest = JobRequest;
 pub type JobHistoryResponse = JobResponse;

@@ -73,6 +73,8 @@ pub struct Job {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     pub status: JobStatus,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task_pubkey: Option<String>,
     pub tasks: Vec<JobTask>,
     pub total_price_sol: f64,
     pub overall_complexity: u8,
@@ -94,6 +96,7 @@ impl Job {
         Self {
             id: Some(mongodb::bson::oid::ObjectId::new().to_hex()),
             status: JobStatus::Priced,
+            task_pubkey: None,
             tasks,
             total_price_sol,
             overall_complexity,
