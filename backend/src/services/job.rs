@@ -17,7 +17,7 @@ impl JobService {
     }
 
     /// Get database client from environment and return a service instance
-    pub async fn from_env() -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn from_env() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let mongo_url = std::env::var("MONGODB_URL").unwrap_or_else(|_| {
             "mongodb://loco:loco@localhost:27017/loco_dev?authSource=admin".to_string()
         });
@@ -32,7 +32,10 @@ impl JobService {
     }
 
     /// Save a job to MongoDB (jobs collection)
-    pub async fn save(&self, job: &Job) -> Result<String, Box<dyn std::error::Error>> {
+    pub async fn save(
+        &self,
+        job: &Job,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let collection = self.db.collection::<Job>("jobs");
 
         debug!("Saving job");
@@ -52,7 +55,10 @@ impl JobService {
     }
 
     /// Get a job by ID
-    pub async fn get_by_id(&self, id: &str) -> Result<Option<Job>, Box<dyn std::error::Error>> {
+    pub async fn get_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<Job>, Box<dyn std::error::Error + Send + Sync>> {
         let collection = self.db.collection::<Job>("jobs");
 
         debug!("Fetching job by id: {}", id);
@@ -63,8 +69,24 @@ impl JobService {
         Ok(job)
     }
 
+    /// Get a job by task pubkey
+    pub async fn get_by_task_pubkey(
+        &self,
+        task_pubkey: &str,
+    ) -> Result<Option<Job>, Box<dyn std::error::Error + Send + Sync>> {
+        let collection = self.db.collection::<Job>("jobs");
+
+        debug!("Fetching job by task_pubkey: {}", task_pubkey);
+
+        let job = collection
+            .find_one(doc! { "task_pubkey": task_pubkey })
+            .await?;
+
+        Ok(job)
+    }
+
     /// Get all jobs
-    pub async fn get_all(&self) -> Result<Vec<Job>, Box<dyn std::error::Error>> {
+    pub async fn get_all(&self) -> Result<Vec<Job>, Box<dyn std::error::Error + Send + Sync>> {
         let collection = self.db.collection::<Job>("jobs");
 
         debug!("Fetching all jobs");
@@ -84,7 +106,7 @@ impl JobService {
         &self,
         id: &str,
         job: &Job,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let collection = self.db.collection::<Job>("jobs");
 
         debug!("Updating job by id: {}", id);
@@ -105,8 +127,36 @@ impl JobService {
         Ok(())
     }
 
+    /// Update a job by task pubkey
+    pub async fn update_by_task_pubkey(
+        &self,
+        task_pubkey: &str,
+        job: &Job,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let collection = self.db.collection::<Job>("jobs");
+
+        debug!("Updating job by task_pubkey: {}", task_pubkey);
+
+        let mut updated_job = job.clone();
+        updated_job.updated_at = Some(chrono::Utc::now().to_rfc3339());
+
+        let result = collection
+            .replace_one(doc! { "task_pubkey": task_pubkey }, &updated_job)
+            .await?;
+
+        if result.matched_count == 0 {
+            return Err("Job not found".into());
+        }
+
+        debug!("Job updated successfully");
+        Ok(())
+    }
+
     /// Delete a job by ID
-    pub async fn delete_by_id(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn delete_by_id(
+        &self,
+        id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let collection = self.db.collection::<Job>("jobs");
 
         debug!("Deleting job by id: {}", id);
