@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod job_history_tests {
-    use backend::data::job_history::{JobHistoryEntry, JobTask};
+    use backend::data::job::{JobHistoryEntry, JobTask};
 
     #[test]
     fn create_job_history_with_valid_data() {

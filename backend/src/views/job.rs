@@ -12,22 +12,22 @@ pub struct JobTaskRequest {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(clippy::module_name_repetitions)]
-pub struct JobHistoryRequest {
+pub struct JobRequest {
     pub tasks: Vec<JobTaskRequest>,
     pub total_price_sol: f64,
     pub overall_complexity: u8,
     pub rationale: String,
 }
 
-impl JobHistoryRequest {
+impl JobRequest {
     #[must_use]
-    pub fn validate(&self) -> Option<JobHistoryValidationErrorResponse> {
+    pub fn validate(&self) -> Option<JobValidationErrorResponse> {
         if self.tasks.is_empty() {
-            return Some(JobHistoryValidationErrorResponse::for_empty_tasks());
+            return Some(JobValidationErrorResponse::for_empty_tasks());
         }
 
         if self.rationale.trim().is_empty() {
-            return Some(JobHistoryValidationErrorResponse::for_empty_rationale());
+            return Some(JobValidationErrorResponse::for_empty_rationale());
         }
 
         None
@@ -45,7 +45,7 @@ pub struct JobTaskResponse {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(clippy::module_name_repetitions)]
-pub struct JobHistoryResponse {
+pub struct JobResponse {
     pub id: String,
     pub job_id: i64,
     pub tasks: Vec<JobTaskResponse>,
@@ -58,13 +58,13 @@ pub struct JobHistoryResponse {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[allow(clippy::module_name_repetitions)]
-pub struct JobHistoryValidationErrorResponse {
+pub struct JobValidationErrorResponse {
     pub code: String,
     pub message: String,
     pub field_errors: BTreeMap<String, Vec<String>>,
 }
 
-impl JobHistoryValidationErrorResponse {
+impl JobValidationErrorResponse {
     const VALIDATION_ERROR_CODE: &'static str = "validation_error";
 
     #[must_use]
@@ -115,12 +115,12 @@ impl JobHistoryValidationErrorResponse {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[allow(clippy::module_name_repetitions)]
-pub struct JobHistoryErrorResponse {
+pub struct JobErrorResponse {
     pub code: String,
     pub message: String,
 }
 
-impl JobHistoryErrorResponse {
+impl JobErrorResponse {
     #[must_use]
     pub fn new(code: &str, message: &str) -> Self {
         Self {
@@ -130,13 +130,19 @@ impl JobHistoryErrorResponse {
     }
 }
 
+// Backward compatibility aliases
+pub type JobHistoryRequest = JobRequest;
+pub type JobHistoryResponse = JobResponse;
+pub type JobHistoryValidationErrorResponse = JobValidationErrorResponse;
+pub type JobHistoryErrorResponse = JobErrorResponse;
+
 #[cfg(test)]
 mod tests {
-    use super::JobHistoryRequest;
+    use super::JobRequest;
 
     #[test]
     fn request_validation_rejects_empty_tasks() {
-        let request = JobHistoryRequest {
+        let request = JobRequest {
             tasks: vec![],
             total_price_sol: 100.0,
             overall_complexity: 3,
@@ -148,7 +154,7 @@ mod tests {
 
     #[test]
     fn request_validation_rejects_empty_rationale() {
-        let request = JobHistoryRequest {
+        let request = JobRequest {
             tasks: vec![],
             total_price_sol: 100.0,
             overall_complexity: 3,
@@ -161,7 +167,7 @@ mod tests {
     #[test]
     fn request_validation_allows_valid_request() {
         use super::JobTaskRequest;
-        let request = JobHistoryRequest {
+        let request = JobRequest {
             tasks: vec![JobTaskRequest {
                 title: "Task 1".to_string(),
                 description: "Description".to_string(),

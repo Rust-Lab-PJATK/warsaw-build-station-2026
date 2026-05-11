@@ -1,12 +1,17 @@
-use crate::data::job_history::JobHistoryEntry;
+//! JobService — Internal service for managing jobs
+//!
+//! This service is for backend-to-backend communication only.
+//! Endpoints and external access are NOT exposed.
+
+use crate::data::job::Job;
 use mongodb::{Client, Database, bson::doc};
 use tracing::{debug, error};
 
-pub struct JobHistoryService {
+pub struct JobService {
     db: Database,
 }
 
-impl JobHistoryService {
+impl JobService {
     pub fn new(db: Database) -> Self {
         Self { db }
     }
@@ -26,20 +31,17 @@ impl JobHistoryService {
         Ok(Self::new(db))
     }
 
-    /// Save a job history entry to MongoDB
-    pub async fn save(
-        &self,
-        job_history: &JobHistoryEntry,
-    ) -> Result<String, Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<JobHistoryEntry>("job_history");
+    /// Save a job to MongoDB (jobs collection)
+    pub async fn save(&self, job: &Job) -> Result<String, Box<dyn std::error::Error>> {
+        let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Saving job history for job_id: {}", job_history.job_id);
+        debug!("Saving job for job_id: {}", job.job_id);
 
-        let result = collection.insert_one(job_history).await?;
+        let result = collection.insert_one(job).await?;
 
         match result.inserted_id.as_str() {
             Some(id) => {
-                debug!("Job history saved successfully with id: {}", id);
+                debug!("Job saved successfully with id: {}", id);
                 Ok(id.to_string())
             }
             None => {
@@ -49,25 +51,25 @@ impl JobHistoryService {
         }
     }
 
-    /// Get a job history entry by job_id
+    /// Get a job by job_id
     pub async fn get_by_job_id(
         &self,
         job_id: i64,
-    ) -> Result<Option<JobHistoryEntry>, Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<JobHistoryEntry>("job_history");
+    ) -> Result<Option<Job>, Box<dyn std::error::Error>> {
+        let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Fetching job history for job_id: {}", job_id);
+        debug!("Fetching job for job_id: {}", job_id);
 
-        let job_history = collection.find_one(doc! { "job_id": job_id }).await?;
+        let job = collection.find_one(doc! { "job_id": job_id }).await?;
 
-        Ok(job_history)
+        Ok(job)
     }
 
-    /// Get all job history entries
-    pub async fn get_all(&self) -> Result<Vec<JobHistoryEntry>, Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<JobHistoryEntry>("job_history");
+    /// Get all jobs
+    pub async fn get_all(&self) -> Result<Vec<Job>, Box<dyn std::error::Error>> {
+        let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Fetching all job history");
+        debug!("Fetching all jobs");
 
         let mut cursor = collection.find(doc! {}).await?;
 
@@ -79,43 +81,40 @@ impl JobHistoryService {
         Ok(results)
     }
 
-    /// Update a job history entry
-    pub async fn update(
-        &self,
-        job_history: &JobHistoryEntry,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<JobHistoryEntry>("job_history");
+    /// Update a job
+    pub async fn update(&self, job: &Job) -> Result<(), Box<dyn std::error::Error>> {
+        let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Updating job history for job_id: {}", job_history.job_id);
+        debug!("Updating job for job_id: {}", job.job_id);
 
-        let mut updated_history = job_history.clone();
-        updated_history.updated_at = Some(chrono::Utc::now().to_rfc3339());
+        let mut updated_job = job.clone();
+        updated_job.updated_at = Some(chrono::Utc::now().to_rfc3339());
 
         let result = collection
-            .replace_one(doc! { "job_id": job_history.job_id }, &updated_history)
+            .replace_one(doc! { "job_id": job.job_id }, &updated_job)
             .await?;
 
         if result.matched_count == 0 {
-            return Err("Job history not found".into());
+            return Err("Job not found".into());
         }
 
-        debug!("Job history updated successfully");
+        debug!("Job updated successfully");
         Ok(())
     }
 
-    /// Delete a job history entry by job_id
+    /// Delete a job by job_id
     pub async fn delete_by_job_id(&self, job_id: i64) -> Result<(), Box<dyn std::error::Error>> {
-        let collection = self.db.collection::<JobHistoryEntry>("job_history");
+        let collection = self.db.collection::<Job>("jobs");
 
-        debug!("Deleting job history for job_id: {}", job_id);
+        debug!("Deleting job for job_id: {}", job_id);
 
         let result = collection.delete_one(doc! { "job_id": job_id }).await?;
 
         if result.deleted_count == 0 {
-            return Err("Job history not found".into());
+            return Err("Job not found".into());
         }
 
-        debug!("Job history deleted successfully");
+        debug!("Job deleted successfully");
         Ok(())
     }
 
@@ -138,3 +137,6 @@ impl JobHistoryService {
         Ok(job_id)
     }
 }
+
+// Backward compatibility alias
+pub type JobHistoryService = JobService;
