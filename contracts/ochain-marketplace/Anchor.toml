@@ -1,0 +1,13 @@
+  [toolchain]
+  anchor_version = "0.30.1"
+
+  [features]
+  resolution = true
+
+  [programs.devnet]
+  ochain_marketplace = "4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHmvE"
+
+  [provider]
+  cluster = "devnet"
+  wallet = "~/.config/solana/id.json"
+  
