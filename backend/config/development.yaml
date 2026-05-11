@@ -48,3 +48,5 @@ settings:
   elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID") }}
   elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL") }}
   elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT") }}
+  elevenlabs_rag_parent_folder_id: {{ get_env(name="ELEVENLABS_RAG_PARENT_FOLDER_ID", default="") }}
+  elevenlabs_rag_upsert_url: {{ get_env(name="ELEVENLABS_RAG_UPSERT_URL", default="") }}
