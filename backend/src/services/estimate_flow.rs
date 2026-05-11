@@ -75,6 +75,7 @@ mod tests {
                     {
                         "title":"Backend",
                         "description":"Implementacja endpointów",
+                        "estimated_hours": 24,
                         "price_sol": 380,
                         "complexity": 3,
                         "rationale":"Zakres średni."
@@ -89,6 +90,7 @@ mod tests {
         assert!(result.is_ok());
         if let Ok(estimate) = result {
             assert_eq!(estimate.tasks.len(), 1);
+            assert_eq!(estimate.tasks[0].estimated_hours, 24.0);
             assert_eq!(estimate.tasks[0].price_sol, 380.0);
             assert_eq!(estimate.tasks[0].complexity, 3);
             assert_eq!(estimate.total_price_sol, 380.0);

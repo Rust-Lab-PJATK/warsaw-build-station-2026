@@ -26,6 +26,7 @@ impl EstimateRequest {
 pub struct EstimateTaskResponse {
     pub title: String,
     pub description: String,
+    pub estimated_hours: f64,
     pub price_sol: f64,
     pub complexity: u8,
     pub rationale: String,
@@ -139,6 +140,7 @@ impl From<crate::services::estimate_output::ValidatedEstimate> for EstimateRespo
                 .map(|task| EstimateTaskResponse {
                     title: task.title,
                     description: task.description,
+                    estimated_hours: task.estimated_hours,
                     price_sol: task.price_sol,
                     complexity: task.complexity,
                     rationale: task.rationale,
