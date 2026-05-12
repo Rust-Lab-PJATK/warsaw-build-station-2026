@@ -205,14 +205,14 @@ export function PostTaskForm() {
           className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--accent-primary)] bg-[var(--accent-primary-dim)] py-4 font-semibold text-[var(--accent-primary)] transition-all hover:bg-[var(--accent-primary)] hover:text-[var(--text-inverse)] active:scale-95"
         >
           <CheckCircleIcon className="h-5 w-5" />
-          Akceptuj
+          Accept
         </button>
         <button
           onClick={() => router.push("/")}
           className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--accent-red-dim)] bg-[var(--accent-red-dim)] py-4 font-semibold text-[var(--accent-red)] transition-all hover:bg-[var(--accent-red)] hover:text-white active:scale-95"
         >
           <XCircleIcon className="h-5 w-5" />
-          Odrzuć
+          Reject
         </button>
       </div>
 
@@ -228,17 +228,17 @@ export function PostTaskForm() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--accent-primary-dim)] bg-[var(--accent-primary-dim)]">
               <CheckCircleIcon className="h-8 w-8 text-[var(--accent-primary)]" />
             </div>
-            <h2 className="text-xl font-bold text-[var(--text-primary)]">Zaakceptowano!</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">Accepted!</h2>
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              Zleceniodawca zaakceptował wykonane zadanie.
+              The client has accepted the completed task.
               <br />
-              Płatność zostanie zwolniona z escrow.
+              Payment will be released from escrow.
             </p>
             <button
               onClick={() => setShowModal(false)}
               className="mt-6 w-full rounded-[var(--radius-md)] border border-[var(--accent-primary-dim)] bg-[var(--accent-primary-dim)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-primary)] transition-all hover:bg-[var(--accent-primary)] hover:text-[var(--text-inverse)]"
             >
-              Zamknij
+              Close
             </button>
           </div>
         </div>
