@@ -16,8 +16,7 @@ Program: ochain-marketplace
   Program ID: 4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHmvE                      
 
    The marketplace is live at:
-  https://explorer.solana.com/address/4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHm
-  vE?cluster=devnet
+  https://explorer.solana.com/address/4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHmvE?cluster=devnet
 
 
 
