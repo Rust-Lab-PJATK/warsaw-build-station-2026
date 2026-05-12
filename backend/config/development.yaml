@@ -43,13 +43,13 @@ workers:
 #        ... other fields
 
 settings:
-  estimate_provider: {{ get_env(name="ESTIMATE_PROVIDER") }}
-  elevenlabs_api_key: {{ get_env(name="ELEVENLABS_API_KEY") }}
-  elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID") }}
-  elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL") }}
+  estimate_provider: {{ get_env(name="ESTIMATE_PROVIDER", default="elevenlabs") }}
+  elevenlabs_api_key: {{ get_env(name="ELEVENLABS_API_KEY", default="") }}
+  elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID", default="") }}
+  elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL", default="https://api.elevenlabs.io") }}
   elevenlabs_conversation_ws_url: {{ get_env(name="ELEVENLABS_CONVERSATION_WS_URL", default="wss://api.elevenlabs.io/v1/convai/conversation") }}
   elevenlabs_conversation_timeout_secs: {{ get_env(name="ELEVENLABS_CONVERSATION_TIMEOUT_SECS", default="600") }}
-  elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT") }}
+  elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT", default="8") }}
   elevenlabs_simulated_user_language: {{ get_env(name="ELEVENLABS_SIMULATED_USER_LANGUAGE", default="en") }}
   elevenlabs_simulated_user_prompt: {{ get_env(name="ELEVENLABS_SIMULATED_USER_PROMPT", default="") }}
   elevenlabs_simulated_user_llm: {{ get_env(name="ELEVENLABS_SIMULATED_USER_LLM", default="") }}

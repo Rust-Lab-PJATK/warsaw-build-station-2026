@@ -50,11 +50,11 @@ export function EscrowVaultBalance({ taskPubkey, agentPubkey }: Props) {
       : rewardBalance ?? null;
 
   return (
-    <div className="rounded-xl border border-surface-elevated bg-surface-card p-5 space-y-3">
+    <div className="rounded-lg border border-white/[0.08] bg-surface-card p-5 space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/10">
-          <LockIcon className="h-4 w-4 text-accent-purple" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-teal/10">
+          <LockIcon className="h-4 w-4 text-accent-teal" />
         </div>
         <div>
           <p className="text-sm font-semibold text-white">Escrow Vault</p>
@@ -77,12 +77,12 @@ export function EscrowVaultBalance({ taskPubkey, agentPubkey }: Props) {
         <BalanceRow
           label="Agent stake"
           lamports={stakeBalance}
-          accent="text-accent-purple"
+          accent="text-accent-teal"
         />
       )}
 
       {totalLocked !== null && agentPubkey && (
-        <div className="flex items-center justify-between border-t border-surface-elevated pt-3">
+        <div className="flex items-center justify-between border-t border-white/[0.08] pt-3">
           <span className="text-sm font-semibold text-gray-300">
             Total locked
           </span>

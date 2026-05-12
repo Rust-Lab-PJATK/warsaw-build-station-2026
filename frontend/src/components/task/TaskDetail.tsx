@@ -18,6 +18,22 @@ import { ExternalLinkIcon, CopyIcon, Check } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 
+const GRADIENTS = [
+  "from-violet-500 to-purple-700",
+  "from-emerald-400 to-teal-600",
+  "from-orange-400 to-red-600",
+  "from-sky-400 to-blue-600",
+  "from-pink-400 to-rose-600",
+  "from-amber-400 to-orange-600",
+  "from-cyan-400 to-blue-500",
+  "from-lime-400 to-green-600",
+];
+
+function pubkeyGradient(pubkey: PublicKey): string {
+  const sum = pubkey.toBytes().slice(0, 4).reduce((a, b) => a + b, 0);
+  return GRADIENTS[sum % GRADIENTS.length];
+}
+
 function CopyableAddress({ pubkey }: { pubkey: PublicKey }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -48,7 +64,7 @@ function InfoRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-surface-elevated last:border-0">
+    <div className="flex items-center justify-between py-2.5 border-b border-white/[0.06] last:border-0">
       <span className="text-sm text-gray-500">{label}</span>
       <div className="text-sm text-white">{children}</div>
     </div>
@@ -86,36 +102,44 @@ export function TaskDetailView({
   const showSubmitCountdown = status === "claimed" && submitDeadline > 0;
   const showDisputeCountdown = status === "submitted" && disputeDeadline > 0;
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      {/* ── Header ───────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">
-              Task #{task.taskId.toString()}
-            </h1>
-            <StatusBadge variant={status} />
-          </div>
-          <div className="mt-1 flex items-center gap-1.5">
-            <span className="text-xs text-gray-600">Task PDA:</span>
-            <CopyableAddress pubkey={taskPubkey} />
-            <a
-              href={`https://explorer.solana.com/address/${taskPubkey.toBase58()}?cluster=devnet`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-gray-300 transition-colors"
-            >
-              <ExternalLinkIcon className="h-3 w-3" />
-            </a>
-          </div>
-        </div>
+  const gradient = pubkeyGradient(taskPubkey);
+  const letter = taskPubkey.toBase58()[0].toUpperCase();
 
-        <div className="flex items-center gap-2 rounded-xl border border-surface-elevated bg-surface-card px-4 py-2">
-          <span className="text-xs text-gray-500">Reward</span>
-          <span className="font-mono text-xl font-bold text-accent-green">
-            ◎ {lamportsToSol(task.reward).toFixed(4)}
-          </span>
+  return (
+    <div className="mx-auto max-w-5xl space-y-6 px-4 pb-8">
+      {/* ── Gradient hero ────────────────────────────────────── */}
+      <div className={`relative rounded-lg overflow-hidden bg-gradient-to-br ${gradient}`}>
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="relative px-6 py-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="flex items-end gap-4">
+            <div className="h-14 w-14 rounded-lg bg-black/30 backdrop-blur-sm border border-white/20 flex items-center justify-center shrink-0">
+              <span className="text-2xl font-bold text-white">{letter}</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl font-bold text-white">Task #{task.taskId.toString()}</h1>
+                <StatusBadge variant={status} />
+              </div>
+              <div className="mt-1 flex items-center gap-1.5">
+                <span className="text-xs text-white/60">PDA:</span>
+                <CopyableAddress pubkey={taskPubkey} />
+                <a
+                  href={`https://explorer.solana.com/address/${taskPubkey.toBase58()}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/50 hover:text-white/90 transition-colors"
+                >
+                  <ExternalLinkIcon className="h-3 w-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-lg bg-black/30 backdrop-blur-sm border border-white/20 px-5 py-3 text-right shrink-0">
+            <p className="text-xs text-white/60 mb-0.5">Total Reward</p>
+            <p className="font-mono text-2xl font-bold text-white">
+              ◎ {lamportsToSol(task.reward).toFixed(4)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -124,7 +148,7 @@ export function TaskDetailView({
         {/* Left column — metadata */}
         <div className="space-y-5 lg:col-span-2">
           {/* Task info */}
-          <div className="rounded-xl border border-surface-elevated bg-surface-card p-5">
+          <div className="rounded-lg border border-white/[0.08] bg-surface-card p-5">
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
               Task Details
             </p>
@@ -139,7 +163,7 @@ export function TaskDetailView({
               )}
             </InfoRow>
             <InfoRow label="Required Stake">
-              <span className="font-mono text-accent-purple">
+              <span className="font-mono text-accent-teal">
                 ◎ {lamportsToSol(task.requiredStake).toFixed(4)}
               </span>
             </InfoRow>
@@ -154,7 +178,7 @@ export function TaskDetailView({
           <ProofBadge state={proofState} resultHash={task.resultHash} />
 
           {/* Action buttons */}
-          <div className="rounded-xl border border-surface-elevated bg-surface-card p-5">
+          <div className="rounded-lg border border-white/[0.08] bg-surface-card p-5">
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
               Actions
             </p>
@@ -195,7 +219,7 @@ export function TaskDetailView({
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center justify-center gap-2 rounded-xl border border-surface-elevated",
+              "flex items-center justify-center gap-2 rounded-lg border border-white/[0.08]",
               "bg-surface-card px-4 py-3 text-sm text-gray-400 hover:text-white hover:border-gray-600 transition-all"
             )}
           >
@@ -213,17 +237,32 @@ export function TaskDetail({ taskPubkey }: Props) {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent-purple border-t-transparent" />
+      <div className="mx-auto max-w-5xl px-4 pb-8 space-y-6 animate-pulse">
+        <div className="h-36 rounded-lg bg-surface-elevated" />
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-5">
+            <div className="h-48 rounded-lg bg-surface-elevated" />
+            <div className="h-24 rounded-lg bg-surface-elevated" />
+          </div>
+          <div className="space-y-5">
+            <div className="h-40 rounded-lg bg-surface-elevated" />
+            <div className="h-24 rounded-lg bg-surface-elevated" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !task) {
     return (
-      <div className="rounded-xl border border-accent-red/30 bg-accent-red/5 p-6 text-center">
-        <p className="font-semibold text-accent-red">Failed to load task</p>
-        <p className="mt-1 text-sm text-gray-500">{error ?? "Account not found"}</p>
+      <div className="mx-auto max-w-5xl px-4 pb-8">
+        <div className="rounded-lg border border-accent-red/30 bg-accent-red/5 p-10 text-center">
+          <p className="font-bold text-accent-red text-lg">Task not found</p>
+          <p className="mt-2 text-sm text-gray-500">{error ?? "Account not found on devnet"}</p>
+          <a href="/agent" className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-5 py-2.5 text-sm text-gray-300 hover:text-white transition-colors">
+            ← Back to marketplace
+          </a>
+        </div>
       </div>
     );
   }

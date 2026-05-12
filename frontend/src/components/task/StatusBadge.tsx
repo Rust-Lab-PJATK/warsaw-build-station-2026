@@ -3,7 +3,7 @@ import { TaskStatusVariant, STATUS_LABELS } from "@/types/marketplace";
 
 const VARIANT_STYLES: Record<TaskStatusVariant, string> = {
   open: "bg-accent-green/10 text-accent-green border border-accent-green/30",
-  claimed: "bg-accent-purple/10 text-accent-purple border border-accent-purple/30",
+  claimed: "bg-accent-teal/10 text-accent-teal border border-accent-teal/30",
   submitted: "bg-blue-500/10 text-blue-400 border border-blue-500/30",
   approved: "bg-accent-green/20 text-accent-green border border-accent-green/50",
   disputed: "bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/30",
@@ -12,7 +12,7 @@ const VARIANT_STYLES: Record<TaskStatusVariant, string> = {
 
 const DOT_STYLES: Record<TaskStatusVariant, string> = {
   open: "bg-accent-green animate-pulse",
-  claimed: "bg-accent-purple animate-pulse",
+  claimed: "bg-accent-teal animate-pulse",
   submitted: "bg-blue-400",
   approved: "bg-accent-green",
   disputed: "bg-accent-yellow animate-pulse",

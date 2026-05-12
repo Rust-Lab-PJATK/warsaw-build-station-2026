@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use loco_rs::app::{AppContext, Initializer};
-use loco_rs::{Error, Result};
+use loco_rs::Result;
 use mongodb::{Client, options::ClientOptions};
-use tracing::info;
+use tracing::{info, warn};
 
 pub struct MongoDbInitializer;
 
@@ -19,18 +19,29 @@ impl Initializer for MongoDbInitializer {
             "mongodb://loco:loco@localhost:27017/loco_dev?authSource=admin".to_string()
         });
 
-        let options = ClientOptions::parse(&mongo_url).await.map_err(Error::msg)?;
+        let options = match ClientOptions::parse(&mongo_url).await {
+            Ok(opts) => opts,
+            Err(err) => {
+                warn!("MongoDB connection skipped: failed to parse URL: {err}");
+                return Ok(());
+            }
+        };
 
-        let client = Client::with_options(options).map_err(Error::msg)?;
+        let client = match Client::with_options(options) {
+            Ok(c) => c,
+            Err(err) => {
+                warn!("MongoDB connection skipped: failed to create client: {err}");
+                return Ok(());
+            }
+        };
 
         let db_name = std::env::var("MONGODB_DB_NAME").unwrap_or_else(|_| "loco_dev".to_string());
         let db = client.database(&db_name);
 
-        db.run_command(mongodb::bson::doc! { "ping": 1 })
-            .await
-            .map_err(Error::msg)?;
-
-        info!("MongoDB connection initialized successfully");
+        match db.run_command(mongodb::bson::doc! { "ping": 1 }).await {
+            Ok(_) => info!("MongoDB connection initialized successfully"),
+            Err(err) => warn!("MongoDB unavailable, continuing without it: {err}"),
+        }
 
         Ok(())
     }

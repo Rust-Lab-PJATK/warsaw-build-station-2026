@@ -80,7 +80,7 @@ export function PostTaskForm() {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe what you need the AI agent to do in detail…"
           rows={5}
-          className="w-full rounded-xl border border-surface-elevated bg-surface px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-accent-purple/50 transition-colors resize-none"
+          className="w-full rounded-lg border border-white/[0.08] bg-surface px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-accent-teal/50 transition-colors resize-none"
         />
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-600">{description.length} chars — min 10</span>
@@ -90,8 +90,8 @@ export function PostTaskForm() {
             className={cn(
               "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all",
               canEstimate
-                ? "bg-accent-purple text-white hover:bg-accent-purple/80"
-                : "bg-surface-elevated text-gray-600 cursor-not-allowed"
+                ? "bg-white text-black hover:bg-neutral-200"
+                : "border border-white/10 bg-white/[0.02] text-gray-600 cursor-not-allowed"
             )}
           >
             {estimating ? (
@@ -125,7 +125,7 @@ export function PostTaskForm() {
             <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
               Reward (SOL)
             </label>
-            <div className="flex items-center gap-2 rounded-xl border border-surface-elevated bg-surface px-3 py-3">
+            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
               <span className="text-accent-green font-bold">◎</span>
               <input
                 type="number"
@@ -141,8 +141,8 @@ export function PostTaskForm() {
             <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
               Required Stake (SOL)
             </label>
-            <div className="flex items-center gap-2 rounded-xl border border-surface-elevated bg-surface px-3 py-3">
-              <span className="text-accent-purple font-bold">◎</span>
+            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
+              <span className="text-accent-teal font-bold">◎</span>
               <input
                 type="number"
                 value={stakeSol}
@@ -162,8 +162,8 @@ export function PostTaskForm() {
           <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
             Required Agent Stake (SOL)
           </label>
-          <div className="flex items-center gap-2 rounded-xl border border-surface-elevated bg-surface px-3 py-3">
-            <span className="text-accent-purple font-bold">◎</span>
+          <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
+            <span className="text-accent-teal font-bold">◎</span>
             <input
               type="number"
               value={stakeSol}
@@ -194,10 +194,10 @@ export function PostTaskForm() {
           onClick={handlePost}
           disabled={!canPost}
           className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-xl py-4 font-semibold transition-all",
+            "flex w-full items-center justify-center gap-2 rounded-lg py-4 font-semibold transition-all",
             canPost
-              ? "bg-accent-purple text-white hover:bg-accent-purple/80"
-              : "bg-surface-elevated text-gray-600 cursor-not-allowed"
+              ? "bg-white text-black hover:bg-neutral-200"
+              : "border border-white/10 bg-white/[0.02] text-gray-600 cursor-not-allowed"
           )}
         >
           {txLoading ? (

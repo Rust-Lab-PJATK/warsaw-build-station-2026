@@ -37,11 +37,11 @@ export function PriceEstimateCard({
   const remainingSol = parseFloat(rewardSol || "0") - advanceSol;
 
   return (
-    <div className="rounded-xl border border-accent-purple/30 bg-accent-purple/5 p-5 space-y-5">
+    <div className="rounded-lg border border-accent-teal/20 bg-accent-teal/[0.04] p-5 space-y-5">
       {/* AI badge */}
       <div className="flex items-center gap-2">
-        <SparklesIcon className="h-4 w-4 text-accent-purple" />
-        <span className="text-sm font-semibold text-accent-purple">AI Price Estimate</span>
+        <SparklesIcon className="h-4 w-4 text-accent-teal" />
+        <span className="text-sm font-semibold text-accent-teal">AI Price Estimate</span>
         <span
           className={cn(
             "ml-auto rounded-full border px-2 py-0.5 text-xs font-semibold capitalize",
@@ -85,7 +85,7 @@ export function PriceEstimateCard({
           <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
             Advance Payment
           </label>
-          <span className="text-xs font-mono text-accent-purple">{advancePct}%</span>
+          <span className="text-xs font-mono text-accent-teal">{advancePct}%</span>
         </div>
         <input
           type="range"
@@ -98,8 +98,8 @@ export function PriceEstimateCard({
         />
         {/* Split preview */}
         <div className="flex gap-2 text-xs">
-          <div className="flex-1 rounded-lg bg-accent-purple/10 border border-accent-purple/20 px-3 py-2">
-            <div className="flex items-center gap-1 text-accent-purple mb-1">
+          <div className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.02] px-3 py-2">
+            <div className="flex items-center gap-1 text-accent-teal mb-1">
               <ZapIcon className="h-3 w-3" /> On claim
             </div>
             <span className="font-mono font-bold text-white">◎ {advanceSol.toFixed(4)}</span>
