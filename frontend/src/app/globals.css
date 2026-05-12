@@ -2,8 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Ambient background ──────────────────────────────────── */
+
+/* SVG fractal-noise grain — rendered entirely in the browser, no image file */
+.noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* Staggered blob animation delays */
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
 :root {
-  --background: #0f1117;
+  --background: #000000;
   --foreground: #f8fafc;
 }
 
@@ -14,13 +27,44 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Wallet adapter modal dark theme override */
+/* Wallet adapter dark theme overrides */
 .wallet-adapter-modal-wrapper {
-  background: #161b27 !important;
+  background: #0f1117 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 16px !important;
 }
+.wallet-adapter-modal-title {
+  color: #f8fafc !important;
+  font-size: 1rem !important;
+}
+
+/* Primary "Select Wallet" button — white on dark */
 .wallet-adapter-button {
-  background: #3B82F6 !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  height: 36px !important;
+  padding: 0 14px !important;
 }
-.wallet-adapter-button:hover {
-  background: #2563EB !important;
+.wallet-adapter-button:hover,
+.wallet-adapter-button:not([disabled]):hover {
+  background: #e5e5e5 !important;
+}
+
+/* Wallet list inside modal — keep dark, consistent with surface */
+.wallet-adapter-modal-list li {
+  border-radius: 10px !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button {
+  background: rgba(255,255,255,0.03) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  height: 52px !important;
+  font-weight: 500 !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(255,255,255,0.06) !important;
 }

@@ -55,12 +55,12 @@ export function DeadlineCountdown({ label, deadlineUnix }: Props) {
   return (
     <div
       className={cn(
-        "rounded-xl border bg-surface-card p-5 space-y-4 transition-colors",
+        "rounded-lg border bg-surface-card p-5 space-y-4 transition-colors",
         urgent
           ? "border-accent-red/40"
           : expired
           ? "border-gray-700"
-          : "border-surface-elevated"
+          : "border-white/[0.08]"
       )}
     >
       <div className="flex items-center gap-2">

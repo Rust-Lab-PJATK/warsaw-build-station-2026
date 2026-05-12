@@ -54,7 +54,7 @@ export function ProofBadge({ state, resultHash }: Props) {
   return (
     <div
       className={cn(
-        "rounded-xl border p-5 space-y-3 transition-all",
+        "rounded-lg border p-5 space-y-3 transition-all",
         cfg.border,
         cfg.bg
       )}
@@ -62,7 +62,7 @@ export function ProofBadge({ state, resultHash }: Props) {
       <div className="flex items-center gap-3">
         <div
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl border",
+            "flex h-10 w-10 items-center justify-center rounded-lg border",
             cfg.border
           )}
         >

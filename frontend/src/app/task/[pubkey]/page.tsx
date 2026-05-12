@@ -36,13 +36,13 @@ export default function TaskPage({ params }: Props) {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl px-4 pt-6">
+      <div className="mx-auto max-w-5xl px-4 pt-6 pb-2">
         <Link
-          href="/"
+          href="/agent"
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors"
         >
           <ArrowLeftIcon className="h-4 w-4" />
-          All tasks
+          Back to marketplace
         </Link>
       </div>
       <TaskDetail taskPubkey={pubkey} />

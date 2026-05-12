@@ -51,7 +51,7 @@ function ActionButton({
 }) {
   const colors = {
     green: "border-accent-green/30 bg-accent-green/10 text-accent-green hover:bg-accent-green/20 disabled:opacity-40",
-    purple: "border-accent-purple/30 bg-accent-purple/10 text-accent-purple hover:bg-accent-purple/20 disabled:opacity-40",
+    purple: "border-accent-teal/30 bg-accent-teal/10 text-accent-teal hover:bg-accent-teal/20 disabled:opacity-40",
     blue: "border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 disabled:opacity-40",
     yellow: "border-accent-yellow/30 bg-accent-yellow/10 text-accent-yellow hover:bg-accent-yellow/20 disabled:opacity-40",
     red: "border-accent-red/30 bg-accent-red/10 text-accent-red hover:bg-accent-red/20 disabled:opacity-40",
@@ -62,7 +62,7 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl border px-4 py-3 transition-all",
+        "flex w-full items-center gap-3 rounded-lg border px-4 py-3 transition-all",
         colors[variant]
       )}
     >
@@ -187,7 +187,7 @@ export function ActionPanel({ task, taskPubkey, onSuccess }: Props) {
       )}
 
       {actions.length === 0 ? (
-        <div className="rounded-xl border border-gray-800 bg-surface-card px-4 py-5 text-center">
+        <div className="rounded-lg border border-white/[0.08] bg-surface-card px-4 py-5 text-center">
           <p className="text-sm text-gray-500">
             {!publicKey
               ? "Connect your wallet to interact"

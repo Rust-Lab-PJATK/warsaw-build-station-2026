@@ -42,6 +42,12 @@ pub mod ochain_marketplace {
         require!(reward > 0, MarketplaceError::ZeroReward);
         require!(required_stake > 0, MarketplaceError::ZeroStake);
         require!(advance_bps <= 5_000, MarketplaceError::AdvanceBpsTooHigh);
+        let advance_amount = (reward as u128)
+            .checked_mul(advance_bps as u128)
+            .ok_or(MarketplaceError::Overflow)?
+            .checked_div(10_000)
+            .ok_or(MarketplaceError::Overflow)? as u64;
+        require!(advance_amount <= required_stake, MarketplaceError::AdvanceExceedsStake);
 
         let task = &mut ctx.accounts.task;
         task.client = ctx.accounts.client.key();
@@ -641,4 +647,6 @@ pub enum MarketplaceError {
     Overflow,
     #[msg("Advance basis points cannot exceed 50% (5000 bps)")]
     AdvanceBpsTooHigh,
+    #[msg("Advance payment would exceed required stake")]
+    AdvanceExceedsStake,
 }

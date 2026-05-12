@@ -1,8 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
-// Replace with `anchor build` output after first build or set via env var
-const PROGRAM_ID_STR = process.env.NEXT_PUBLIC_PROGRAM_ID ?? "11111111111111111111111111111111";
+const PROGRAM_ID_STR =
+  process.env.NEXT_PUBLIC_PROGRAM_ID ?? "4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHmvE";
 export const PROGRAM_ID = new PublicKey(PROGRAM_ID_STR);
 
 const TASK_SEED = Buffer.from("task");

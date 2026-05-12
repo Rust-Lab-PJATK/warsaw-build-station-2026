@@ -43,8 +43,8 @@ workers:
 #        ... other fields
 
 settings:
-  estimate_provider: {{ get_env(name="ESTIMATE_PROVIDER") }}
-  elevenlabs_api_key: {{ get_env(name="ELEVENLABS_API_KEY") }}
-  elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID") }}
-  elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL") }}
-  elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT") }}
+  estimate_provider: {{ get_env(name="ESTIMATE_PROVIDER", default="elevenlabs") }}
+  elevenlabs_api_key: {{ get_env(name="ELEVENLABS_API_KEY", default="") }}
+  elevenlabs_agent_id: {{ get_env(name="ELEVENLABS_AGENT_ID", default="") }}
+  elevenlabs_base_url: {{ get_env(name="ELEVENLABS_BASE_URL", default="https://api.elevenlabs.io") }}
+  elevenlabs_simulation_turns_limit: {{ get_env(name="ELEVENLABS_SIMULATION_TURNS_LIMIT", default="8") }}

@@ -28,13 +28,13 @@ export function SubmitPreviewModal({ taskPubkey, onSuccess, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-surface-elevated bg-surface-card p-6 space-y-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-lg border border-white/[0.08] bg-surface-card p-6 space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10">
-              <FileTextIcon className="h-5 w-5 text-blue-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-teal/10">
+              <FileTextIcon className="h-5 w-5 text-accent-teal" />
             </div>
             <div>
               <p className="font-semibold text-white">Submit Preview</p>
@@ -56,7 +56,7 @@ export function SubmitPreviewModal({ taskPubkey, onSuccess, onClose }: Props) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="ipfs://Qm... or https://..."
             rows={3}
-            className="w-full rounded-xl border border-surface-elevated bg-surface px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500/50 transition-colors resize-none font-mono"
+            className="w-full rounded-lg border border-white/[0.08] bg-surface px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-accent-teal/40 transition-colors resize-none font-mono"
           />
           <p className="text-xs text-gray-600">
             This will be SHA-256 hashed and committed on-chain. The client can verify your preview matches this hash.
@@ -72,7 +72,7 @@ export function SubmitPreviewModal({ taskPubkey, onSuccess, onClose }: Props) {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl border border-surface-elevated py-3 text-sm text-gray-400 hover:text-white transition-colors"
+            className="flex-1 rounded-lg border border-white/[0.08] py-3 text-sm text-gray-400 hover:text-white hover:border-white/20 transition-colors"
           >
             Cancel
           </button>
@@ -80,10 +80,10 @@ export function SubmitPreviewModal({ taskPubkey, onSuccess, onClose }: Props) {
             onClick={handleSubmit}
             disabled={!input.trim() || loading}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all",
+              "flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-semibold transition-all",
               input.trim() && !loading
-                ? "bg-blue-500 text-white hover:bg-blue-400"
-                : "bg-surface-elevated text-gray-600 cursor-not-allowed"
+                ? "bg-white text-black hover:bg-neutral-200"
+                : "border border-white/[0.08] bg-white/[0.02] text-gray-600 cursor-not-allowed"
             )}
           >
             {loading ? <Loader2Icon className="h-4 w-4 animate-spin" /> : null}

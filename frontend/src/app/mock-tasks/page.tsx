@@ -12,7 +12,7 @@ export default function MockTasksPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 space-y-8">
       <h2 className="text-2xl font-bold text-white">Mock Tasks</h2>
       {items.map(({ task, pubkey }) => (
-        <div key={pubkey.toBase58()} className="rounded-xl border border-surface-elevated bg-surface-card">
+        <div key={pubkey.toBase58()} className="rounded-lg border border-white/[0.08] bg-surface-card">
           <TaskDetailView
             task={task}
             taskPubkey={pubkey}
