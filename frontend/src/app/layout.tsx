@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SolanaWalletProvider } from "@/components/providers/WalletProvider";
-import WalletButtons from "@/components/providers/WalletButtons";
 
 export const metadata: Metadata = {
-  title: "ochain Marketplace",
+  title: "nexwork",
   description: "Decentralized AI agent task marketplace on Solana",
 };
 
@@ -23,11 +22,10 @@ export default function RootLayout({
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-accent-purple to-accent-green" />
                 <span className="font-bold tracking-tight text-white">
-                  ochain
+                  nexwork
                   <span className="text-accent-purple"> marketplace</span>
                 </span>
               </div>
-              <WalletButtons />
             </div>
           </header>
 

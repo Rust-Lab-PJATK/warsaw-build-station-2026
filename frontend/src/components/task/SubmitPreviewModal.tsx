@@ -6,6 +6,7 @@ import { FileTextIcon, Loader2Icon, XIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { sha256Bytes } from "@/types/marketplace";
 import { useSubmitResult } from "@/hooks/useMarketplace";
+import { submitPreview, getJobId } from "@/lib/backendApi";
 
 interface Props {
   taskPubkey: PublicKey;
@@ -22,6 +23,15 @@ export function SubmitPreviewModal({ taskPubkey, onSuccess, onClose }: Props) {
     const hash = await sha256Bytes(input.trim());
     const sig = await submitResult(taskPubkey, hash);
     if (sig) {
+      // Notify backend that proof was submitted
+      const jobId = getJobId(taskPubkey.toBase58());
+      if (jobId) {
+        try {
+          await submitPreview(jobId);
+        } catch (e) {
+          console.warn("submitPreview backend call failed:", e);
+        }
+      }
       onSuccess?.();
       onClose();
     }
