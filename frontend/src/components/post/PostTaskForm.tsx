@@ -9,8 +9,10 @@ import { cn } from "@/lib/cn";
 import { LAMPORTS_PER_SOL, sha256Bytes } from "@/types/marketplace";
 import { usePostTask } from "@/hooks/useMarketplace";
 import { findTaskPda } from "@/lib/pdas";
-import { PriceEstimateCard, PriceEstimate } from "./PriceEstimator";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { PriceEstimateCard } from "./PriceEstimator";
+import type { BackendEstimateResponse } from "@/lib/backendApi";
+import { linkTask, storeJobId } from "@/lib/backendApi";
+
 
 export function PostTaskForm() {
   const router = useRouter();
@@ -18,7 +20,7 @@ export function PostTaskForm() {
   const { postTask, loading: txLoading, error: txError } = usePostTask();
 
   const [description, setDescription] = useState("");
-  const [estimate, setEstimate] = useState<PriceEstimate | null>(null);
+  const [estimate, setEstimate] = useState<BackendEstimateResponse | null>(null);
   const [estimating, setEstimating] = useState(false);
   const [estimateError, setEstimateError] = useState("");
 
@@ -38,11 +40,10 @@ export function PostTaskForm() {
         body: JSON.stringify({ description }),
       });
       if (!res.ok) throw new Error("Failed");
-      const data: PriceEstimate = await res.json();
+      const data: BackendEstimateResponse = await res.json();
       setEstimate(data);
-      setRewardSol(data.price_sol.toFixed(4));
-      setAdvancePct(Math.round(data.advance_bps / 100));
-      setStakeSol((data.price_sol * 0.1).toFixed(4));
+      setRewardSol(data.total_price_sol.toFixed(4));
+      setStakeSol((data.total_price_sol * 0.1).toFixed(4));
     } catch {
       setEstimateError("Could not estimate. Fill in price manually below.");
     } finally {
@@ -61,7 +62,19 @@ export function PostTaskForm() {
     const result = await postTask(taskId, rewardLamports, stakeLamports, descHash, advanceBps);
     if (result) {
       const [taskPda] = findTaskPda(publicKey, taskId);
-      router.push(`/task/${taskPda.toBase58()}`);
+      const taskPubkey = taskPda.toBase58();
+
+      // Link on-chain pubkey to the MongoDB job if we have a job_id
+      if (estimate?.job_id) {
+        try {
+          await linkTask(estimate.job_id, taskPubkey);
+          storeJobId(taskPubkey, estimate.job_id);
+        } catch (e) {
+          console.warn("link-task failed:", e);
+        }
+      }
+
+      router.push(`/task/${taskPubkey}`);
     }
   }
 
@@ -80,18 +93,18 @@ export function PostTaskForm() {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Describe what you need the AI agent to do in detail…"
           rows={5}
-          className="w-full rounded-lg border border-white/[0.08] bg-surface px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-accent-teal/50 transition-colors resize-none"
+          className="w-full rounded-lg border border-white/[0.08] bg-surface-card px-4 py-3 text-sm text-white placeholder-gray-500 outline-none focus:border-white/[0.12] transition-colors resize-none"
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600">{description.length} chars — min 10</span>
+          <span className="text-xs text-gray-500">{description.length} chars — min 10</span>
           <button
             onClick={handleEstimate}
             disabled={!canEstimate}
             className={cn(
               "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all",
               canEstimate
-                ? "bg-white text-black hover:bg-neutral-200"
-                : "border border-white/10 bg-white/[0.02] text-gray-600 cursor-not-allowed"
+                ? "bg-accent-teal text-black hover:bg-[var(--accent-primary-hover)]"
+                : "bg-surface-elevated text-gray-500 cursor-not-allowed"
             )}
           >
             {estimating ? (
@@ -118,15 +131,15 @@ export function PostTaskForm() {
         />
       )}
 
-      {/* Manual inputs (shown always, pre-filled after estimate) */}
+      {/* Manual inputs shown when no estimate yet */}
       {!estimate && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
               Reward (SOL)
             </label>
-            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
-              <span className="text-accent-green font-bold">◎</span>
+            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface-card px-3 py-3">
+              <span className="font-bold text-accent-teal">◎</span>
               <input
                 type="number"
                 value={rewardSol}
@@ -141,8 +154,8 @@ export function PostTaskForm() {
             <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
               Required Stake (SOL)
             </label>
-            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
-              <span className="text-accent-teal font-bold">◎</span>
+            <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface-card px-3 py-3">
+              <span className="font-bold text-accent-yellow">◎</span>
               <input
                 type="number"
                 value={stakeSol}
@@ -156,14 +169,14 @@ export function PostTaskForm() {
         </div>
       )}
 
-      {/* Stake input shown below estimate too */}
+      {/* Stake input shown below estimate */}
       {estimate && (
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
             Required Agent Stake (SOL)
           </label>
-          <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface px-3 py-3">
-            <span className="text-accent-teal font-bold">◎</span>
+          <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-surface-card px-3 py-3">
+            <span className="font-bold text-accent-yellow">◎</span>
             <input
               type="number"
               value={stakeSol}
@@ -172,23 +185,23 @@ export function PostTaskForm() {
               className="flex-1 bg-transparent font-mono text-white outline-none"
             />
           </div>
-          <p className="text-xs text-gray-600">
-            Stake is slashed to you if the agent misses their deadline
+          <p className="text-xs text-gray-500">
+            Slashed to you if the agent misses their deadline
           </p>
         </div>
       )}
 
       {/* Submit */}
       {txError && (
-        <p className="rounded-lg bg-accent-red/10 border border-accent-red/30 px-3 py-2 text-sm text-accent-red">
+        <p className="rounded-lg border border-accent-red/20 bg-accent-red/[0.08] px-3 py-2 text-sm text-accent-red">
           {txError}
         </p>
       )}
 
       {!publicKey ? (
-        <div className="flex justify-center">
-          <WalletMultiButton />
-        </div>
+        <p className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-center text-sm text-gray-500">
+          Connect your wallet to post a task
+        </p>
       ) : (
         <button
           onClick={handlePost}
@@ -197,7 +210,7 @@ export function PostTaskForm() {
             "flex w-full items-center justify-center gap-2 rounded-lg py-4 font-semibold transition-all",
             canPost
               ? "bg-white text-black hover:bg-neutral-200"
-              : "border border-white/10 bg-white/[0.02] text-gray-600 cursor-not-allowed"
+              : "border border-white/[0.08] bg-white/[0.02] text-gray-600 cursor-not-allowed"
           )}
         >
           {txLoading ? (
