@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BN } from "@coral-xyz/anchor";
-import { SparklesIcon, Loader2Icon, SendIcon } from "lucide-react";
+import { SparklesIcon, Loader2Icon, SendIcon, CheckCircleIcon, XCircleIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { LAMPORTS_PER_SOL, sha256Bytes } from "@/types/marketplace";
 import { usePostTask } from "@/hooks/useMarketplace";
@@ -12,7 +12,7 @@ import { findTaskPda } from "@/lib/pdas";
 import { PriceEstimateCard } from "./PriceEstimator";
 import type { BackendEstimateResponse } from "@/lib/backendApi";
 import { linkTask, storeJobId } from "@/lib/backendApi";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+
 
 export function PostTaskForm() {
   const router = useRouter();
@@ -27,6 +27,7 @@ export function PostTaskForm() {
   const [rewardSol, setRewardSol] = useState("");
   const [advancePct, setAdvancePct] = useState(20);
   const [stakeSol, setStakeSol] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   async function handleEstimate() {
     if (description.trim().length < 10) return;
@@ -198,28 +199,49 @@ export function PostTaskForm() {
         </p>
       )}
 
-      {!publicKey ? (
-        <div className="flex justify-center">
-          <WalletMultiButton />
-        </div>
-      ) : (
+      <div className="flex gap-3">
         <button
-          onClick={handlePost}
-          disabled={!canPost}
-          className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] py-4 font-semibold transition-all",
-            canPost
-              ? "bg-[var(--accent-primary)] text-[var(--text-inverse)] hover:bg-[var(--accent-primary-hover)]"
-              : "bg-[var(--bg-elevated)] text-[var(--text-muted)] cursor-not-allowed"
-          )}
+          onClick={() => setShowModal(true)}
+          className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--accent-primary)] bg-[var(--accent-primary-dim)] py-4 font-semibold text-[var(--accent-primary)] transition-all hover:bg-[var(--accent-primary)] hover:text-[var(--text-inverse)] active:scale-95"
         >
-          {txLoading ? (
-            <Loader2Icon className="h-5 w-5 animate-spin" />
-          ) : (
-            <SendIcon className="h-5 w-5" />
-          )}
-          {txLoading ? "Posting to Solana…" : "Post Task & Lock Escrow"}
+          <CheckCircleIcon className="h-5 w-5" />
+          Akceptuj
         </button>
+        <button
+          onClick={() => router.push("/")}
+          className="flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-[var(--accent-red-dim)] bg-[var(--accent-red-dim)] py-4 font-semibold text-[var(--accent-red)] transition-all hover:bg-[var(--accent-red)] hover:text-white active:scale-95"
+        >
+          <XCircleIcon className="h-5 w-5" />
+          Odrzuć
+        </button>
+      </div>
+
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="mx-4 w-full max-w-sm rounded-[var(--radius-modal)] border border-[var(--accent-primary-dim)] bg-[var(--bg-surface)] p-8 text-center shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[var(--accent-primary-dim)] bg-[var(--accent-primary-dim)]">
+              <CheckCircleIcon className="h-8 w-8 text-[var(--accent-primary)]" />
+            </div>
+            <h2 className="text-xl font-bold text-[var(--text-primary)]">Zaakceptowano!</h2>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              Zleceniodawca zaakceptował wykonane zadanie.
+              <br />
+              Płatność zostanie zwolniona z escrow.
+            </p>
+            <button
+              onClick={() => setShowModal(false)}
+              className="mt-6 w-full rounded-[var(--radius-md)] border border-[var(--accent-primary-dim)] bg-[var(--accent-primary-dim)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-primary)] transition-all hover:bg-[var(--accent-primary)] hover:text-[var(--text-inverse)]"
+            >
+              Zamknij
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

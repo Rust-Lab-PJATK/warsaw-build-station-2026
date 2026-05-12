@@ -2,16 +2,16 @@ import { AnchorProvider, Program, Idl } from "@coral-xyz/anchor";
 import { Connection } from "@solana/web3.js";
 import { AnchorWallet } from "@solana/wallet-adapter-react";
 
-// Inline IDL derived from contracts/ochain-marketplace/src/lib.rs.
-// Replace with the output of `anchor build` (target/idl/ochain_marketplace.json)
+// Inline IDL derived from contracts/nexwork/src/lib.rs.
+// Replace with the output of `anchor build` (target/idl/nexwork.json)
 // once the contract is compiled.
 //
 // Discriminators are sha256("global:<snake_case_name>")[0..8].
-// Values below are placeholders — replace with real ones after `anchor build`.
+// Values below are placeholders  — replace with real ones after `anchor build`.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const IDL: any = {
   address: "MktpLaCE111111111111111111111111111111111111",
-  metadata: { name: "ochain_marketplace", version: "0.1.0", spec: "0.1.0" },
+  metadata: { name: "nexwork", version: "0.1.0", spec: "0.1.0" },
   instructions: [
     {
       name: "postTask",
