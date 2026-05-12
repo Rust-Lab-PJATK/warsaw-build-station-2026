@@ -1,0 +1,145 @@
+{
+  "address": "4Zf1emVAX8SKoVVpD7Jm75n9cA3WzKRZJQZmESZNHmvE",
+  "metadata": {
+    "name": "ochain_marketplace",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "post_task",
+      "discriminator": [186,136,157,9,235,251,62,142],
+      "accounts": [
+        { "name": "client", "writable": true, "signer": true },
+        { "name": "task", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [116,97,115,107] }, { "kind": "account", "path": "client" }, { "kind": "arg", "path": "task_id" }] } },
+        { "name": "vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [118,97,117,108,116] }, { "kind": "account", "path": "task" }] } },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "task_id", "type": "u64" },
+        { "name": "reward", "type": "u64" },
+        { "name": "required_stake", "type": "u64" },
+        { "name": "description_hash", "type": { "array": ["u8", 32] } },
+        { "name": "advance_bps", "type": "u16" }
+      ]
+    },
+    {
+      "name": "claim_task",
+      "discriminator": [49,222,219,238,155,68,221,136],
+      "accounts": [
+        { "name": "agent", "writable": true, "signer": true },
+        { "name": "task", "writable": true },
+        { "name": "vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [118,97,117,108,116] }, { "kind": "account", "path": "task" }] } },
+        { "name": "stake_vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [115,116,97,107,101] }, { "kind": "account", "path": "task" }, { "kind": "account", "path": "agent" }] } },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "submit_result",
+      "discriminator": [240,42,89,180,10,239,9,214],
+      "accounts": [
+        { "name": "agent", "signer": true },
+        { "name": "task", "writable": true }
+      ],
+      "args": [
+        { "name": "result_hash", "type": { "array": ["u8", 32] } }
+      ]
+    },
+    {
+      "name": "approve_result",
+      "discriminator": [98,61,175,184,93,254,61,236],
+      "accounts": [
+        { "name": "client", "signer": true },
+        { "name": "agent", "writable": true },
+        { "name": "task", "writable": true },
+        { "name": "vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [118,97,117,108,116] }, { "kind": "account", "path": "task" }] } },
+        { "name": "stake_vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [115,116,97,107,101] }, { "kind": "account", "path": "task" }, { "kind": "account", "path": "agent" }] } },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    },
+    {
+      "name": "dispute_result",
+      "discriminator": [123,38,138,180,219,102,23,181],
+      "accounts": [
+        { "name": "client", "signer": true },
+        { "name": "task", "writable": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "slash_timeout",
+      "discriminator": [46,76,242,157,233,208,207,11],
+      "accounts": [
+        { "name": "client", "writable": true },
+        { "name": "agent" },
+        { "name": "task", "writable": true },
+        { "name": "vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [118,97,117,108,116] }, { "kind": "account", "path": "task" }] } },
+        { "name": "stake_vault", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [115,116,97,107,101] }, { "kind": "account", "path": "task" }, { "kind": "account", "path": "agent" }] } },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "TaskAccount",
+      "discriminator": [235,32,10,23,81,60,170,203]
+    }
+  ],
+  "events": [],
+  "errors": [
+    { "code": 6000, "name": "ZeroReward", "msg": "Reward must be greater than zero" },
+    { "code": 6001, "name": "ZeroStake", "msg": "Required stake must be greater than zero" },
+    { "code": 6002, "name": "TaskNotOpen", "msg": "Task is not open for claiming" },
+    { "code": 6003, "name": "InvalidStatus", "msg": "Task is not in the expected status for this instruction" },
+    { "code": 6004, "name": "Unauthorized", "msg": "Caller is not authorized for this operation" },
+    { "code": 6005, "name": "AgentMismatch", "msg": "Provided agent does not match the agent recorded on the task" },
+    { "code": 6006, "name": "DeadlineExpired", "msg": "Submit deadline has passed" },
+    { "code": 6007, "name": "DisputeWindowClosed", "msg": "Dispute window has closed" },
+    { "code": 6008, "name": "SlashNotReady", "msg": "Slash conditions have not been met yet" },
+    { "code": 6009, "name": "Overflow", "msg": "Arithmetic overflow" },
+    { "code": 6010, "name": "AdvanceBpsTooHigh", "msg": "Advance basis points cannot exceed 50% (5000 bps)" },
+    { "code": 6011, "name": "AdvanceExceedsStake", "msg": "Advance payment would exceed required stake" }
+  ],
+  "types": [
+    {
+      "name": "TaskAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "client", "type": "pubkey" },
+          { "name": "agent", "type": { "option": "pubkey" } },
+          { "name": "task_id", "type": "u64" },
+          { "name": "reward", "type": "u64" },
+          { "name": "required_stake", "type": "u64" },
+          { "name": "advance_bps", "type": "u16" },
+          { "name": "advance_paid", "type": "u64" },
+          { "name": "description_hash", "type": { "array": ["u8", 32] } },
+          { "name": "result_hash", "type": { "option": { "array": ["u8", 32] } } },
+          { "name": "status", "type": { "defined": { "name": "TaskStatus" } } },
+          { "name": "submit_deadline", "type": "i64" },
+          { "name": "dispute_deadline", "type": "i64" },
+          { "name": "task_bump", "type": "u8" },
+          { "name": "vault_bump", "type": "u8" },
+          { "name": "stake_bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "TaskStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          { "name": "Open" },
+          { "name": "Claimed" },
+          { "name": "Submitted" },
+          { "name": "Approved" },
+          { "name": "Disputed" },
+          { "name": "Slashed" }
+        ]
+      }
+    }
+  ]
+}

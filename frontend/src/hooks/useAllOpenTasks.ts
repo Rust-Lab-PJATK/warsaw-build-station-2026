@@ -6,7 +6,7 @@ import { BorshAccountsCoder } from "@coral-xyz/anchor";
 import { useEffect, useState, useCallback } from "react";
 import { PROGRAM_ID } from "@/lib/pdas";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-import IDL from "@/target/idl/ochain_marketplace.json";
+import IDL from "@/lib/idl/ochain_marketplace.json";
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const TASK_ACCOUNT_SIZE = 192;

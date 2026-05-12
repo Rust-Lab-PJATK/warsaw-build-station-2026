@@ -3,7 +3,7 @@ import { Connection } from "@solana/web3.js";
 import { AnchorWallet } from "@solana/wallet-adapter-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-import IDL from "../target/idl/ochain_marketplace.json";
+import IDL from "./idl/ochain_marketplace.json";
 
 export type OchainMarketplace = any;
 
